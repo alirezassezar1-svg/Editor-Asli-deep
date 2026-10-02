@@ -1,0 +1,2638 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark" data-lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04060a">
+<title>NONONICK WORKFLOW OS — AI Agents v3</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   NONONICK WORKFLOW OS — Complete styles
+   Design: dark futuristic OS · glass surfaces · cyan/violet glow
+   ═══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  transition:background .3s,color .3s;
+}
+
+/* ── Dark (default) ─────────────────────────────────────────────── */
+:root{
+  --bg:#04060a; --bg-2:#080b12;
+  --surface:rgba(255,255,255,.045);
+  --surface-2:rgba(255,255,255,.08);
+  --panel:rgba(10,14,22,.88);
+  --panel-solid:#0b0f18;
+  --border:rgba(255,255,255,.09);
+  --border-2:rgba(255,255,255,.16);
+  --text:#e8eefc; --dim:#7d879b; --mute:#4d576a;
+  --cyan:#22d3ee; --blue:#3b82f6; --violet:#a855f7;
+  --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+  --queued:#64748b;
+  --radius:16px;
+  --shadow:0 18px 44px -18px rgba(0,0,0,.75);
+  --glow:0 0 24px -6px rgba(34,211,238,.4);
+}
+
+/* ── Light ─────────────────────────────────────────────────────── */
+[data-theme="light"]{
+  --bg:#f5f7fc; --bg-2:#ffffff;
+  --surface:rgba(10,20,40,.04);
+  --surface-2:rgba(10,20,40,.08);
+  --panel:rgba(255,255,255,.92);
+  --panel-solid:#ffffff;
+  --border:rgba(10,20,40,.1);
+  --border-2:rgba(10,20,40,.2);
+  --text:#0a1020; --dim:#5a6478; --mute:#8b93a7;
+  --cyan:#0891b2; --blue:#2563eb; --violet:#7c3aed;
+  --shadow:0 18px 44px -22px rgba(20,30,60,.28);
+  --glow:0 0 20px -6px rgba(8,145,178,.3);
+}
+
+/* ── RTL ───────────────────────────────────────────────────────── */
+[dir="rtl"]{text-align:right}
+[dir="rtl"] .wf-row{grid-template-columns:1fr minmax(90px,32%) 60px}
+[dir="rtl"] .kv{grid-template-columns:1fr auto}
+
+/* ═══════════════════════════════════════════════════════════════
+   App shell
+   ═══════════════════════════════════════════════════════════════ */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+
+.topbar{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:0 14px;padding-top:env(safe-area-inset-top);
+  height:calc(52px + env(safe-area-inset-top));
+  background:var(--panel);
+  -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+  border-bottom:1px solid var(--border);z-index:30;
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.02em}
+.logo{
+  width:24px;height:24px;border-radius:7px;flex:0 0 auto;
+  background:conic-gradient(from 210deg,var(--cyan),var(--violet),var(--blue),var(--cyan));
+  box-shadow:var(--glow);
+}
+.brand b{font-size:12px;line-height:1.1;letter-spacing:.04em}
+.brand small{display:block;font-size:9px;color:var(--dim);font-weight:600;letter-spacing:.12em}
+.spacer{flex:1}
+
+.toggle-group{display:flex;gap:2px;background:var(--surface);border-radius:99px;padding:2px;border:1px solid var(--border)}
+.toggle-group button{
+  border:0;background:transparent;color:var(--dim);
+  padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700;
+  font-family:inherit;cursor:pointer;letter-spacing:.06em;transition:all .2s;
+}
+.toggle-group button.active{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04121a}
+.toggle-group button:hover:not(.active){color:var(--text)}
+
+.pill{
+  padding:5px 11px;border-radius:99px;font-size:10px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--border);background:var(--surface);color:var(--dim);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.pill.offline .dot{background:var(--warn)}
+.pill.err .dot{background:var(--err)}
+
+.screens{flex:1;position:relative;min-height:0}
+.screen{
+  position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:14px 14px 100px;display:none;
+}
+.screen.active{display:block}
+
+.nav{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:space-around;
+  background:var(--panel);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+  border-top:1px solid var(--border);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:30;
+}
+.nav button{
+  flex:1;background:transparent;border:0;padding:8px 2px;border-radius:12px;
+  color:var(--mute);font-family:inherit;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  transition:color .18s;position:relative;
+}
+.nav button .ico{font-size:17px;line-height:1}
+.nav button.active{color:var(--text)}
+.nav button.active .ico{filter:drop-shadow(0 0 8px var(--cyan))}
+.nav button .badge{
+  position:absolute;top:2px;right:calc(50% - 18px);
+  min-width:16px;height:16px;border-radius:99px;padding:0 4px;
+  background:var(--err);color:#fff;font-size:9px;font-weight:800;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2px var(--bg);
+}
+.nav button .badge.on{display:inline-flex}
+
+/* ═══════════════════════════════════════════════════════════════
+   Components
+   ═══════════════════════════════════════════════════════════════ */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;margin-bottom:10px;transition:border-color .18s;
+}
+.card.tap{cursor:pointer}
+.card.tap:hover{border-color:var(--border-2)}
+.card h3{margin:0 0 4px;font-size:14px;font-weight:700}
+.card p{margin:0;font-size:12px;color:var(--dim);line-height:1.55}
+.card .row{display:flex;align-items:center;gap:10px}
+.card .row .grow{flex:1;min-width:0}
+
+.section-title{
+  font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mute);margin:18px 4px 8px;
+}
+.section-title:first-child{margin-top:6px}
+
+.hero{
+  border-radius:20px;padding:18px;margin-bottom:14px;
+  background:
+    radial-gradient(80% 90% at 15% 0%,rgba(34,211,238,.16),transparent 60%),
+    radial-gradient(80% 90% at 90% 20%,rgba(168,85,247,.16),transparent 60%),
+    var(--surface);
+  border:1px solid var(--border);position:relative;overflow:hidden;
+}
+.hero .score{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:4px}
+.hero .score small{font-size:14px;font-weight:700;color:var(--dim);margin-left:4px}
+.hero .label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.hero .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.hero .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 8px;text-align:center}
+.hero .stat b{display:block;font-size:17px;font-weight:800}
+.hero .stat span{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:99px;font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;border:1px solid;background:transparent;
+}
+.chip .dot{width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.chip.s-queued{color:var(--queued);border-color:rgba(100,116,139,.4)}
+.chip.s-running{color:var(--cyan);border-color:rgba(34,211,238,.4)}
+.chip.s-waiting{color:var(--violet);border-color:rgba(168,85,247,.4)}
+.chip.s-retrying{color:var(--warn);border-color:rgba(245,158,11,.4)}
+.chip.s-succeeded{color:var(--ok);border-color:rgba(34,197,94,.4)}
+.chip.s-failed{color:var(--err);border-color:rgba(239,68,68,.4)}
+.chip.s-cancelled{color:var(--mute);border-color:rgba(100,116,139,.4)}
+.chip.s-partial{color:var(--warn);border-color:rgba(245,158,11,.4)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 16px;border-radius:13px;font-family:inherit;font-size:13px;font-weight:700;
+  border:1px solid var(--border);background:var(--surface);color:var(--text);
+  cursor:pointer;transition:all .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  border-color:transparent;color:#04121a;box-shadow:0 10px 26px -10px var(--violet);
+}
+.btn.danger{color:var(--err);border-color:rgba(239,68,68,.35)}
+.btn.wide{width:100%}
+.btn.sm{padding:8px 12px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+.timeline{position:relative;padding-left:24px}
+.timeline::before{
+  content:'';position:absolute;left:9px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--violet));opacity:.28;border-radius:2px;
+}
+.tnode{position:relative;margin-bottom:12px}
+.tnode::before{
+  content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--mute);box-shadow:0 0 0 3px var(--bg);
+}
+.tnode.ok::before{border-color:var(--ok);box-shadow:0 0 0 3px var(--bg),0 0 12px -2px var(--ok)}
+.tnode.fail::before{border-color:var(--err);box-shadow:0 0 0 3px var(--bg),0 0 12px -2px var(--err)}
+.tnode.wait::before{border-color:var(--violet);box-shadow:0 0 0 3px var(--bg),0 0 12px -2px var(--violet)}
+.tnode.run::before{border-color:var(--cyan);box-shadow:0 0 0 3px var(--bg),0 0 12px -2px var(--cyan);animation:pulse 1.4s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.tnode .lbl{font-size:12px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.tnode .meta{font-size:11px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12px}
+.kv dt{color:var(--dim);font-weight:600}
+.kv dd{margin:0;font-family:ui-monospace,Menlo,monospace;word-break:break-word}
+
+.wf{display:flex;flex-direction:column;gap:6px;font-family:ui-monospace,Menlo,monospace;font-size:11px}
+.wf-row{display:grid;grid-template-columns:minmax(90px,32%) 1fr 60px;gap:8px;align-items:center}
+.wf-row .name{color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf-bar-wrap{background:var(--surface);border-radius:4px;height:14px;position:relative;overflow:hidden}
+.wf-bar{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--violet));min-width:2px}
+.wf-bar.err{background:linear-gradient(90deg,var(--err),var(--violet))}
+.wf-bar.wait{background:linear-gradient(90deg,var(--violet),#6366f1)}
+.wf-row .ms{text-align:right;color:var(--dim)}
+
+.sheet-back{
+  position:fixed;inset:0;background:rgba(2,4,8,.65);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  z-index:100;opacity:0;pointer-events:none;transition:opacity .28s;
+}
+.sheet-back.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:110;max-height:90vh;
+  display:flex;flex-direction:column;background:var(--panel-solid);
+  border:1px solid var(--border);border-bottom:0;
+  border-top-left-radius:24px;border-top-right-radius:24px;
+  box-shadow:0 -24px 60px -20px rgba(0,0,0,.75);
+  transform:translateY(105%);transition:transform .34s cubic-bezier(.32,.72,0,1);
+}
+.sheet.on{transform:translateY(0)}
+.sheet .grip{width:38px;height:4px;border-radius:99px;background:var(--border-2);margin:10px auto 4px}
+.sheet .head{padding:6px 18px 10px;display:flex;align-items:flex-start;gap:10px}
+.sheet .head h2{margin:0;font-size:16px;font-weight:800;flex:1}
+.sheet .head p{margin:2px 0 0;font-size:11px;color:var(--dim)}
+.sheet .body{padding:0 18px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet .close{
+  width:32px;height:32px;border-radius:99px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;
+  display:grid;place-items:center;flex:0 0 auto;
+}
+
+.inspector{
+  position:fixed;inset:0;z-index:120;background:var(--bg);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);
+}
+.inspector.on{transform:translateX(0)}
+.inspector .ihead{
+  flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;
+  display:flex;align-items:center;gap:10px;
+  background:var(--panel);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+  border-bottom:1px solid var(--border);
+}
+.inspector .ihead .back{
+  width:34px;height:34px;border-radius:99px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;
+  display:grid;place-items:center;flex:0 0 auto;font-size:16px;
+}
+.inspector .ihead .ttl{flex:1;min-width:0}
+.inspector .ihead .ttl h2{margin:0;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inspector .ihead .ttl p{margin:2px 0 0;font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+.inspector .ibody{flex:1;overflow-y:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom))}
+
+.tabs{display:flex;gap:4px;padding:8px 4px;overflow-x:auto;scrollbar-width:none;margin:0 -14px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  flex:0 0 auto;padding:7px 13px;border-radius:99px;
+  border:1px solid var(--border);background:var(--surface);
+  color:var(--dim);font-family:inherit;font-size:11px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;
+}
+.tabs button.active{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04121a;border-color:transparent}
+
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.input,.textarea,.select{
+  width:100%;padding:11px 13px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);font-family:inherit;font-size:13px;outline:none;
+  transition:border-color .15s;
+}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--cyan)}
+.textarea{min-height:90px;resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5}
+.select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:34px}
+
+pre.mono{
+  margin:0;padding:12px;border-radius:12px;overflow:auto;
+  background:rgba(0,0,0,.28);border:1px solid var(--border);
+  font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.55;color:#c8d3ea;
+  max-height:280px;
+}
+[data-theme="light"] pre.mono{background:rgba(10,20,40,.05);color:#1a2540}
+
+.empty{padding:40px 20px;text-align:center;color:var(--mute);font-size:13px;line-height:1.6}
+.empty b{display:block;color:var(--dim);font-size:14px;margin-bottom:6px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(24px);
+  padding:10px 16px;border-radius:99px;
+  background:var(--panel);border:1px solid var(--border);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  box-shadow:var(--shadow);font-size:12px;font-weight:600;z-index:200;
+  opacity:0;pointer-events:none;transition:all .28s;white-space:nowrap;
+  max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.prov{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:12px;background:var(--surface);border:1px solid var(--border);
+  margin-bottom:6px;font-size:12px;
+}
+.prov .grow{flex:1;min-width:0}
+.prov b{display:block;font-size:12px;font-weight:700}
+.prov small{font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+.prov .st{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.prov .st.up{color:var(--ok)}
+.prov .st.down{color:var(--err)}
+.prov .st.deg{color:var(--warn)}
+
+.mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px}
+.mcard b{display:block;font-size:18px;font-weight:800}
+.mcard span{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.mcard small{display:block;font-size:10px;color:var(--dim);margin-top:3px}
+
+.acc{border:1px solid var(--border);border-radius:14px;background:var(--surface);margin-bottom:8px;overflow:hidden}
+.acc summary{padding:12px 14px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:'›';margin-left:auto;color:var(--dim);font-size:16px;transition:transform .2s}
+.acc[open] summary::after{transform:rotate(90deg)}
+.acc .acc-body{padding:0 14px 14px;font-size:12px;color:var(--dim);line-height:1.6}
+
+code.k{
+  font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  background:var(--surface-2);border:1px solid var(--border);
+  padding:1px 5px;border-radius:5px;color:var(--cyan);
+}
+
+.progress{height:3px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .35s ease;border-radius:99px}
+
+.agent-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;
+  letter-spacing:.04em;border:1px solid var(--border);
+}
+.agent-badge.groq{background:rgba(34,211,238,.1);color:var(--cyan);border-color:rgba(34,211,238,.3)}
+.agent-badge.openrouter{background:rgba(168,85,247,.1);color:var(--violet);border-color:rgba(168,85,247,.3)}
+.agent-badge.gemini{background:rgba(59,130,246,.1);color:var(--blue);border-color:rgba(59,130,246,.3)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════════ TOP BAR ═══════════════════ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div><b>NONONICK</b><small>WORKFLOW OS</small></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="toggle-group" id="langToggle">
+      <button data-lang="en" class="active">EN</button>
+      <button data-lang="fa">فا</button>
+    </div>
+    <div class="toggle-group" id="themeToggle">
+      <button data-theme="dark" class="active">🌙</button>
+      <button data-theme="light">☀</button>
+    </div>
+    <div class="pill" id="sysPill"><span class="dot"></span><span id="sysPillText">ONLINE</span></div>
+  </header>
+
+  <!-- ═══════════════════ SCREENS ═══════════════════ -->
+  <div class="screens">
+
+    <!-- HOME -->
+    <section class="screen active" data-screen="home">
+      <div class="hero">
+        <div class="label" data-i18n="systemHealth">System Health</div>
+        <div class="score" id="healthScore">—<small>%</small></div>
+        <div class="stat-row">
+          <div class="stat"><b id="hRunning">0</b><span data-i18n="running">Running</span></div>
+          <div class="stat"><b id="hWaiting">0</b><span data-i18n="waiting">Waiting</span></div>
+          <div class="stat"><b id="hFailed">0</b><span data-i18n="failed">Failed</span></div>
+          <div class="stat"><b id="hTotal">0</b><span data-i18n="total">Total</span></div>
+        </div>
+      </div>
+      <div class="section-title" data-i18n="agents">AI Agents</div>
+      <div id="agentCards"></div>
+      <div class="section-title" data-i18n="needsAttention">Needs your attention</div>
+      <div id="homeApprovals"></div>
+      <div class="section-title" data-i18n="recentActivity">Recent activity</div>
+      <div id="homeRecent"></div>
+      <div class="section-title" data-i18n="improvementSignals">Improvement signals</div>
+      <div id="homeInsights"></div>
+    </section>
+
+    <!-- WORKFLOWS -->
+    <section class="screen" data-screen="workflows">
+      <div class="section-title" data-i18n="workflowRegistry">Workflow Registry</div>
+      <div id="wfList"></div>
+    </section>
+
+    <!-- RUNS -->
+    <section class="screen" data-screen="runs">
+      <div class="section-title" data-i18n="executions">Executions</div>
+      <div id="runsList"></div>
+    </section>
+
+    <!-- APPROVALS -->
+    <section class="screen" data-screen="approvals">
+      <div class="section-title" data-i18n="pendingApprovals">Pending Approvals</div>
+      <div id="approvalsList"></div>
+      <div class="section-title" data-i18n="history">History</div>
+      <div id="approvalHistory"></div>
+    </section>
+
+    <!-- SYSTEM -->
+    <section class="screen" data-screen="system">
+      <div class="section-title" data-i18n="providers">AI Providers</div>
+      <div id="provList"></div>
+      <div class="section-title" data-i18n="apiKeys">API Keys</div>
+      <div id="keySection"></div>
+      <div class="section-title" data-i18n="metrics">Metrics</div>
+      <div id="sysMetrics" class="mgrid"></div>
+      <div class="section-title" data-i18n="data">Data</div>
+      <div class="card">
+        <div class="btn-row">
+          <button class="btn sm" id="btnExport" data-i18n="exportState">Export state</button>
+          <button class="btn sm" id="btnImport" data-i18n="importState">Import state</button>
+          <button class="btn sm danger" id="btnReset" data-i18n="resetOS">Reset OS</button>
+        </div>
+        <p style="margin-top:10px;font-size:11px;line-height:1.6" data-i18n="storageNote">
+          State is stored locally. API keys are stored in memory only — never persisted to localStorage.
+        </p>
+      </div>
+      <div class="section-title" data-i18n="about">About</div>
+      <div class="card">
+        <h3>NONONICK WORKFLOW OS v3.0</h3>
+        <p data-i18n="aboutText">
+          Real AI agents: Groq (fast inference), OpenRouter (model variety),
+          Google Gemini (reasoning). Smart Router selects providers based on measured
+          execution history. Every node attempt is recorded, classified and traceable.
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════ BOTTOM NAV ═══════════════════ -->
+  <nav class="nav" id="nav">
+    <button data-go="home" class="active"><span class="ico">⌂</span><span data-i18n="navHome">Home</span></button>
+    <button data-go="workflows"><span class="ico">◈</span><span data-i18n="navFlows">Flows</span></button>
+    <button data-go="runs"><span class="ico">≡</span><span data-i18n="navRuns">Runs</span><span class="badge" id="navRunsBadge"></span></button>
+    <button data-go="approvals"><span class="ico">✋</span><span data-i18n="navApprovals">Approvals</span><span class="badge" id="navAppBadge"></span></button>
+    <button data-go="system"><span class="ico">⚙</span><span data-i18n="navSystem">System</span></button>
+  </nav>
+
+</div>
+
+<!-- ═══════════════════ SHEET ═══════════════════ -->
+<div class="sheet-back" id="sheetBack"></div>
+<div class="sheet" id="sheet">
+  <div class="grip"></div>
+  <div class="head">
+    <div style="flex:1;min-width:0">
+      <h2 id="sheetTitle">Title</h2>
+      <p id="sheetSub"></p>
+    </div>
+    <button class="close" id="sheetClose">✕</button>
+  </div>
+  <div class="body" id="sheetBody"></div>
+</div>
+
+<!-- ═══════════════════ INSPECTOR ═══════════════════ -->
+<div class="inspector" id="inspector">
+  <div class="ihead">
+    <button class="back" id="inspBack">‹</button>
+    <div class="ttl"><h2 id="inspTitle">Execution</h2><p id="inspSub">—</p></div>
+    <div id="inspStatus"></div>
+  </div>
+  <div class="ibody" id="inspBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   NONONICK WORKFLOW OS v3.0 — Complete modular engine
+   ═══════════════════════════════════════════════════════════════════════════
+   Modules:
+     1.  Utilities                9.  Workflow Registry
+     2.  i18n                     10. Artifact Store
+     3.  State Machine            11. Execution Engine
+     4.  Event Store              12. Approvals
+     5.  Provider Registry        13. Persistence
+     6.  AI Provider Adapters     14. Metrics + Learning
+     7.  Smart Router             15. HTML Report Generator
+     8.  Node Executors           16. UI Rendering
+                                  17. App Boot
+                                  18. Public API
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+function uid(prefix){
+  const r = Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+  return (prefix||'id')+'-'+r;
+}
+function nowISO(){ return new Date().toISOString(); }
+function nowMs(){ return Date.now(); }
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function hash32(str){
+  let h = 0x811c9dc5;
+  for(let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = (h + ((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24))) >>> 0;
+  }
+  return ('00000000'+h.toString(16)).slice(-8);
+}
+function hashObj(o){ return hash32(JSON.stringify(o ?? null)); }
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+function fmtMs(ms){
+  if(ms==null) return '—';
+  if(ms<1000) return ms+'ms';
+  return (ms/1000).toFixed(2)+'s';
+}
+function fmtTime(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  const diff = (Date.now()-d.getTime())/1000;
+  if(diff<60) return Math.floor(diff)+'s';
+  if(diff<3600) return Math.floor(diff/60)+'m';
+  if(diff<86400) return Math.floor(diff/3600)+'h';
+  return d.toLocaleDateString();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. i18n — bilingual architecture (EN + FA with RTL)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const I18N = {
+  en:{
+    navHome:'Home', navFlows:'Flows', navRuns:'Runs', navApprovals:'Approvals', navSystem:'System',
+    systemHealth:'System Health', running:'Running', waiting:'Waiting', failed:'Failed', total:'Total',
+    agents:'AI Agents', needsAttention:'Needs your attention', recentActivity:'Recent activity',
+    improvementSignals:'Improvement signals', workflowRegistry:'Workflow Registry',
+    executions:'Executions', pendingApprovals:'Pending Approvals', history:'History',
+    providers:'AI Providers', apiKeys:'API Keys', metrics:'Metrics', data:'Data', about:'About',
+    exportState:'Export state', importState:'Import state', resetOS:'Reset OS',
+    storageNote:'State is stored locally. API keys are stored in memory only — never persisted to localStorage.',
+    aboutText:'Real AI agents connected: Groq (fast inference), OpenRouter (model variety), Google Gemini (reasoning). Smart Router selects providers based on measured execution history. Every node attempt is recorded, classified and traceable.',
+    noApprovals:'Nothing waiting for you. All clear.', noExecutions:'No executions yet. Open Flows and run your first workflow.',
+    noProviders:'No providers registered.', runWorkflow:'Run workflow', startExecution:'Start execution',
+    inputLabel:'Input (JSON)', cancel:'Cancel', approve:'Approve', reject:'Reject',
+    cancelExecution:'Cancel execution', payloadPreview:'Payload preview',
+    noArtifacts:'No artifacts.', noEvents:'No events recorded.', noErrors:'No errors recorded.',
+    keysNotSet:'Not set', keysSet:'Key set', saveKey:'Save key', clearKey:'Clear key',
+    keyNote:'Keys are stored in this browser session only. They are never sent anywhere except the provider endpoints.',
+    selectProvider:'Select provider', model:'Model', task:'Task',
+    liveGeneration:'Live AI Generation', generating:'Generating…',
+    aiOutput:'AI Output', tokensUsed:'Tokens used', providerUsed:'Provider used',
+    latencyLabel:'Latency', retryCount:'Retries', qualityScore:'Quality',
+    viewReport:'View HTML report', downloadReport:'Download report',
+    analysisReport:'Analysis Report', sourceAttribution:'Source',
+    status:'Status', duration:'Duration', inputHash:'Input hash', outputHash:'Output hash',
+    traceId:'Trace ID', started:'Started', finished:'Finished', nodesOkFail:'Nodes OK / Failed',
+    timeline:'Timeline', inputTab:'Input', processTab:'Process', eventsTab:'Events',
+    outputTab:'Output', errorsTab:'Errors', artifactsTab:'Artifacts',
+    partial:'Partial', cancelled:'Cancelled'
+  },
+  fa:{
+    navHome:'خانه', navFlows:'جریان‌ها', navRuns:'اجراها', navApprovals:'تأییدها', navSystem:'سیستم',
+    systemHealth:'سلامت سیستم', running:'در حال اجرا', waiting:'در انتظار', failed:'ناموفق', total:'کل',
+    agents:'عامل‌های هوش مصنوعی', needsAttention:'نیاز به توجه', recentActivity:'فعالیت اخیر',
+    improvementSignals:'نشانه‌های بهبود', workflowRegistry:'رجیستری جریان‌کاری',
+    executions:'اجراها', pendingApprovals:'تأییدهای در انتظار', history:'تاریخچه',
+    providers:'ارائه‌دهندگان هوش مصنوعی', apiKeys:'کلیدهای API', metrics:'معیارها', data:'داده‌ها', about:'درباره',
+    exportState:'خروجی وضعیت', importState:'ورودی وضعیت', resetOS:'بازنشانی سیستم',
+    storageNote:'وضعیت به صورت محلی ذخیره می‌شود. کلیدهای API فقط در حافظه نگهداری می‌شوند و هرگز در localStorage ذخیره نمی‌شوند.',
+    aboutText:'عامل‌های هوش مصنوعی واقعی متصل شده‌اند: Groq (استنتاج سریع)، OpenRouter (تنوع مدل)، Google Gemini (استدلال). مسیریاب هوشمند ارائه‌دهنده را بر اساس تاریخچه اجرای اندازه‌گیری‌شده انتخاب می‌کند.',
+    noApprovals:'چیزی در انتظار شما نیست.', noExecutions:'هنوز اجرایی وجود ندارد.',
+    noProviders:'ارائه‌دهنده‌ای ثبت نشده.', runWorkflow:'اجرای جریان‌کاری', startExecution:'شروع اجرا',
+    inputLabel:'ورودی (JSON)', cancel:'لغو', approve:'تأیید', reject:'رد',
+    cancelExecution:'لغو اجرا', payloadPreview:'پیش‌نمایش محتوا',
+    noArtifacts:'مصنوعی وجود ندارد.', noEvents:'رویدادی ثبت نشده.', noErrors:'خطایی ثبت نشده.',
+    keysNotSet:'تنظیم نشده', keysSet:'کلید تنظیم شده', saveKey:'ذخیره کلید', clearKey:'پاک کردن کلید',
+    keyNote:'کلیدها فقط در این نشست مرورگر ذخیره می‌شوند و به هیچ جایی جز نقاط پایانی ارائه‌دهنده ارسال نمی‌شوند.',
+    selectProvider:'انتخاب ارائه‌دهنده', model:'مدل', task:'وظیفه',
+    liveGeneration:'تولید زنده هوش مصنوعی', generating:'در حال تولید…',
+    aiOutput:'خروجی هوش مصنوعی', tokensUsed:'توکن مصرفی', providerUsed:'ارائه‌دهنده',
+    latencyLabel:'تأخیر', retryCount:'تلاش مجدد', qualityScore:'کیفیت',
+    viewReport:'مشاهده گزارش HTML', downloadReport:'دانلود گزارش',
+    analysisReport:'گزارش تحلیل', sourceAttribution:'منبع',
+    status:'وضعیت', duration:'مدت', inputHash:'هش ورودی', outputHash:'هش خروجی',
+    traceId:'شناسه ردیابی', started:'شروع', finished:'پایان', nodesOkFail:'گره‌های موفق / ناموفق',
+    timeline:'جدول زمانی', inputTab:'ورودی', processTab:'فرآیند', eventsTab:'رویدادها',
+    outputTab:'خروجی', errorsTab:'خطاها', artifactsTab:'مصنوعات',
+    partial:'جزئی', cancelled:'لغو شده'
+  }
+};
+let LANG = 'en';
+const t = k => (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. STATE MACHINE
+   ═══════════════════════════════════════════════════════════════════════════ */
+const States = {
+  QUEUED:'QUEUED', RUNNING:'RUNNING', WAITING:'WAITING',
+  WAITING_FOR_APPROVAL:'WAITING_FOR_APPROVAL', RETRYING:'RETRYING',
+  PARTIALLY_FAILED:'PARTIALLY_FAILED', FAILED:'FAILED', CANCELLED:'CANCELLED',
+  SUCCEEDED:'SUCCEEDED', ROLLED_BACK:'ROLLED_BACK'
+};
+const Transitions = {
+  QUEUED:['RUNNING','CANCELLED'],
+  RUNNING:['WAITING_FOR_APPROVAL','RETRYING','SUCCEEDED','FAILED','PARTIALLY_FAILED','CANCELLED'],
+  WAITING:['RUNNING','CANCELLED'],
+  WAITING_FOR_APPROVAL:['RUNNING','CANCELLED','FAILED'],
+  RETRYING:['RUNNING','FAILED','CANCELLED'],
+  PARTIALLY_FAILED:['ROLLED_BACK','FAILED','SUCCEEDED'],
+  FAILED:['ROLLED_BACK','QUEUED'],
+  CANCELLED:[], SUCCEEDED:[], ROLLED_BACK:[]
+};
+function canTransition(from,to){ return (Transitions[from]||[]).includes(to); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. EVENT STORE — CloudEvents-style envelope
+   ═══════════════════════════════════════════════════════════════════════════ */
+const EventStore = {
+  events:[], CAP:2000, subs:new Set(),
+  emit(type, subject, data){
+    const evt = {
+      specversion:'1.0', id:uid('evt'), source:'nononick.workflow.os',
+      type, time:nowISO(), subject:subject||null,
+      datacontenttype:'application/json', data:data||{}
+    };
+    this.events.push(evt);
+    if(this.events.length>this.CAP) this.events.splice(0, this.events.length-this.CAP);
+    for(const fn of this.subs){ try{ fn(evt); }catch(e){} }
+    return evt;
+  },
+  subscribe(fn){ this.subs.add(fn); return ()=>this.subs.delete(fn); }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. PROVIDER REGISTRY
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Providers = {
+  list:{},
+  register(p){
+    this.list[p.id] = Object.assign({
+      id:'', name:'', category:'AI', capabilities:[],
+      availability:'UP', pricing:{ per_call_usd:0, per_1k_tokens_usd:0 },
+      rate_limit:{ rpm:null, rpd:null }, latency_history_ms:[],
+      error_rate:0, quality_history:[], context_limit:null,
+      structured_output_support:false, streaming_support:false,
+      requires_secret:false, secret_env:null, models:[]
+    }, p);
+  },
+  get(id){ return this.list[id]; },
+  all(){ return Object.values(this.list); },
+  recordLatency(id, ms){ const p=this.list[id]; if(!p) return; p.latency_history_ms.push(ms); if(p.latency_history_ms.length>50) p.latency_history_ms.shift(); },
+  recordQuality(id, score){ const p=this.list[id]; if(!p) return; p.quality_history.push(score); if(p.quality_history.length>50) p.quality_history.shift(); },
+  recordError(id){ const p=this.list[id]; if(!p) return; p.error_rate = Math.min(1, p.error_rate + 0.05); },
+  avgLatency(id){ const p=this.list[id]; if(!p||!p.latency_history_ms.length) return null; return Math.round(p.latency_history_ms.reduce((a,b)=>a+b,0)/p.latency_history_ms.length); },
+  avgQuality(id){ const p=this.list[id]; if(!p||!p.quality_history.length) return null; return p.quality_history.reduce((a,b)=>a+b,0)/p.quality_history.length; }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. AI PROVIDER ADAPTERS — three real providers
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 6a. Groq (OpenAI-compatible, ultra-fast LPU inference) ──────────── */
+Providers.register({
+  id:'groq',
+  name:'Groq',
+  category:'LLM',
+  capabilities:['ai_generate','ai_summarize','ai_classify','ai_translate'],
+  availability:'UP',
+  pricing:{ per_call_usd:0, per_1k_tokens_usd:0 },
+  rate_limit:{ rpm:30, rpd:1000 },
+  context_limit:131072,
+  structured_output_support:true,
+  streaming_support:true,
+  requires_secret:true,
+  secret_env:'GROQ_API_KEY',
+  models:['llama-3.3-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768']
+});
+
+/* ── 6b. OpenRouter (multi-provider gateway, free tier) ──────────────── */
+Providers.register({
+  id:'openrouter',
+  name:'OpenRouter',
+  category:'LLM',
+  capabilities:['ai_generate','ai_summarize','ai_translate'],
+  availability:'UP',
+  pricing:{ per_call_usd:0, per_1k_tokens_usd:0 },
+  rate_limit:{ rpm:20, rpd:50 },
+  context_limit:131072,
+  structured_output_support:true,
+  streaming_support:false,
+  requires_secret:true,
+  secret_env:'OPENROUTER_API_KEY',
+  models:['openrouter/free','deepseek/deepseek-r1:free','meta-llama/llama-3.2-3b-instruct:free']
+});
+
+/* ── 6c. Google Gemini (native protocol, 1M context) ─────────────────── */
+Providers.register({
+  id:'gemini',
+  name:'Google Gemini',
+  category:'LLM',
+  capabilities:['ai_generate','ai_summarize','ai_classify','ai_translate'],
+  availability:'UP',
+  pricing:{ per_call_usd:0, per_1k_tokens_usd:0 },
+  rate_limit:{ rpm:15, rpd:1500 },
+  context_limit:1048576,
+  structured_output_support:true,
+  streaming_support:false,
+  requires_secret:true,
+  secret_env:'GEMINI_API_KEY',
+  models:['gemini-2.0-flash','gemini-2.5-flash','gemini-1.5-flash']
+});
+
+/* ── AI Adapters ─────────────────────────────────────────────────────── */
+const AIAdapters = {
+
+  /* ── GROQ ────────────────────────────────────────────────────────────
+     POST https://api.groq.com/openai/v1/chat/completions
+     OpenAI-compatible · Bearer auth · CORS enabled
+     ─────────────────────────────────────────────────────────────────── */
+  async groq({ apiKey, model, messages, temperature, maxTokens, signal }){
+    const t0 = nowMs();
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:'POST', signal,
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+apiKey
+      },
+      body: JSON.stringify({
+        model: model || 'llama-3.3-70b-versatile',
+        messages,
+        temperature: temperature ?? 0.4,
+        max_tokens: maxTokens ?? 1024,
+        stream: false
+      })
+    });
+
+    if(!res.ok){
+      const body = await res.text().catch(()=>'');
+      const kind = res.status===429 ? 'RATE_LIMIT'
+                 : (res.status===401||res.status===403) ? 'AUTH'
+                 : res.status>=500 ? 'DEPENDENCY' : 'PERMANENT';
+      const e = new Error('Groq HTTP '+res.status+': '+body.slice(0,200));
+      e.code = kind;
+      throw e;
+    }
+    const data = await res.json();
+    const ms = nowMs()-t0;
+    Providers.recordLatency('groq', ms);
+    return {
+      text: (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '',
+      tokens: (data.usage && (data.usage.total_tokens||0)) || 0,
+      model: data.model || model,
+      duration_ms: ms
+    };
+  },
+
+  /* ── OPENROUTER ──────────────────────────────────────────────────────
+     POST https://openrouter.ai/api/v1/chat/completions
+     OpenAI-compatible · Bearer auth + HTTP-Referer + X-Title headers
+     ─────────────────────────────────────────────────────────────────── */
+  async openrouter({ apiKey, model, messages, temperature, maxTokens, signal }){
+    const t0 = nowMs();
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method:'POST', signal,
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+apiKey,
+        'HTTP-Referer':'https://nononick.studio',
+        'X-Title':'NONONICK Workflow OS'
+      },
+      body: JSON.stringify({
+        model: model || 'openrouter/free',
+        messages,
+        temperature: temperature ?? 0.4,
+        max_tokens: maxTokens ?? 1024
+      })
+    });
+
+    if(!res.ok){
+      const body = await res.text().catch(()=>'');
+      const kind = res.status===429 ? 'RATE_LIMIT'
+                 : (res.status===401||res.status===403) ? 'AUTH'
+                 : res.status>=500 ? 'DEPENDENCY' : 'PERMANENT';
+      const e = new Error('OpenRouter HTTP '+res.status+': '+body.slice(0,200));
+      e.code = kind;
+      throw e;
+    }
+    const data = await res.json();
+    const ms = nowMs()-t0;
+    Providers.recordLatency('openrouter', ms);
+    return {
+      text: (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '',
+      tokens: (data.usage && (data.usage.total_tokens||0)) || 0,
+      model: data.model || model,
+      duration_ms: ms
+    };
+  },
+
+  /* ── GEMINI ──────────────────────────────────────────────────────────
+     POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
+     Native Gemini protocol (contents[] → parts[]) · ?key= query param
+     ─────────────────────────────────────────────────────────────────── */
+  async gemini({ apiKey, model, messages, temperature, maxTokens, signal }){
+    const t0 = nowMs();
+    const m = model || 'gemini-2.0-flash';
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(apiKey);
+
+    // Convert OpenAI-style messages → Gemini contents format
+    const contents = messages.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    // Extract system instruction from messages if present
+    const systemMsg = messages.find(msg => msg.role === 'system');
+    const body = {
+      contents: systemMsg
+        ? contents.filter(msg => msg.role !== 'system')
+        : contents,
+      generationConfig:{
+        temperature: temperature ?? 0.4,
+        maxOutputTokens: maxTokens ?? 1024
+      }
+    };
+    // Gemini uses systemInstruction separately
+    if(systemMsg){
+      body.systemInstruction = { parts: [{ text: systemMsg.content }] };
+    }
+
+    const res = await fetch(url, {
+      method:'POST', signal,
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if(!res.ok){
+      const errBody = await res.text().catch(()=>'');
+      const kind = res.status===429 ? 'RATE_LIMIT'
+                 : (res.status===401||res.status===403) ? 'AUTH'
+                 : res.status>=500 ? 'DEPENDENCY' : 'PERMANENT';
+      const e = new Error('Gemini HTTP '+res.status+': '+errBody.slice(0,200));
+      e.code = kind;
+      throw e;
+    }
+    const data = await res.json();
+    const ms = nowMs()-t0;
+    Providers.recordLatency('gemini', ms);
+
+    // Extract text from Gemini response shape
+    const cand = data.candidates && data.candidates[0];
+    const text = cand && cand.content && cand.content.parts
+      ? cand.content.parts.map(p=>p.text||'').join('')
+      : '';
+    const tokens = (data.usageMetadata && data.usageMetadata.totalTokenCount) || 0;
+
+    return { text, tokens, model: m, duration_ms: ms };
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. SMART ROUTER — chooses provider by measured history
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Router = {
+  route(capability, req={}, exclude=[]){
+    const candidates = Providers.all().filter(p =>
+      p.availability !== 'DOWN' &&
+      p.capabilities.includes(capability) &&
+      !exclude.includes(p.id)
+    );
+    if(!candidates.length){
+      throw Object.assign(new Error('No provider for capability: '+capability), {code:'NO_PROVIDER'});
+    }
+
+    const scored = candidates.map(p=>{
+      const avgLat = Providers.avgLatency(p.id);
+      const avgQual = Providers.avgQuality(p.id);
+      const errRate = p.error_rate || 0;
+      const price = p.pricing.per_call_usd || 0;
+
+      const latencyScore = avgLat ? 1/(1+avgLat/1000) : 0.7;
+      const qualityScore = avgQual != null ? avgQual : 0.7;
+      const reliabilityScore = clamp(1-errRate, 0, 1);
+      const costScore = price===0 ? 1 : 1/(1+price*1000);
+
+      const score = 0.45*qualityScore + 0.30*reliabilityScore + 0.15*latencyScore + 0.10*costScore;
+
+      const reasons = [];
+      if(avgQual!=null && avgQual>=0.8) reasons.push('high_quality');
+      if(avgLat!=null && avgLat<500) reasons.push('low_latency');
+      if(price===0) reasons.push('zero_cost');
+      if(errRate>0.1) reasons.push('elevated_errors');
+
+      return { provider:p, score, reasons };
+    }).sort((a,b)=>b.score-a.score);
+
+    const chosen = scored[0];
+    const fallbacks = scored.slice(1).map(s=>s.provider.id);
+
+    EventStore.emit('router.decision', null, {
+      capability, chosen:chosen.provider.id,
+      score:+chosen.score.toFixed(4), fallbacks, evaluated:scored.length
+    });
+
+    return { provider:chosen.provider, score:chosen.score, reasons:chosen.reasons, fallbacks };
+  },
+
+  /* Fallback chain: try primary → secondary → tertiary */
+  async executeWithFallback(capability, requestFn, exclude=[]){
+    let chain = [];
+    try{
+      const r = this.route(capability, {}, exclude);
+      chain = [r.provider.id, ...r.fallbacks];
+    }catch(e){
+      throw e;
+    }
+    const errors = [];
+    for(const providerId of chain){
+      try{
+        const provider = Providers.get(providerId);
+        const apiKey = Secrets.get(providerId);
+        if(!apiKey){
+          errors.push({provider:providerId, error:'No API key configured'});
+          continue;
+        }
+        const result = await requestFn(provider, apiKey);
+        return { ...result, provider:providerId };
+      }catch(err){
+        errors.push({provider:providerId, error:String(err.message||err), code:err.code});
+        Providers.recordError(providerId);
+        EventStore.emit('router.fallback', null, { failed:providerId, error:String(err.message||err) });
+      }
+    }
+    const e = new Error('All providers failed: '+JSON.stringify(errors));
+    e.code = 'ALL_PROVIDERS_FAILED';
+    e.details = errors;
+    throw e;
+  }
+};
+
+/* ── SECRETS — in-memory only, never persisted ───────────────────────── */
+const Secrets = {
+  _store:{},
+  set(id, key){ this._store[id] = key; },
+  get(id){ return this._store[id] || null; },
+  has(id){ return !!this._store[id]; },
+  clear(id){ delete this._store[id]; },
+  clearAll(){ this._store = {}; }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. NODE EXECUTORS — including real AI nodes
+   ═══════════════════════════════════════════════════════════════════════════ */
+const NodeExecutors = {
+
+  /* ── AI_GENERATE — bilingual summary via real AI ──────────────────── */
+  async AI_GENERATE(ctx, node, deps){
+    const items = Array.isArray(deps.input) ? deps.input : [deps.input];
+    const maxItems = node.config.max_items || 3;
+
+    const results = [];
+    for(const item of items.slice(0, maxItems)){
+      const title = item.title || item.text || '(no title)';
+      const sourceUrl = item.source_url || item.url || '';
+
+      const prompt = [
+        'You are a bilingual news summarizer for NONONICK, a professional Persian/English digital studio.',
+        'Given the source material below, produce a structured JSON response with EXACTLY these fields:',
+        'title_en (English headline, max 100 chars)',
+        'title_fa (Persian headline, max 100 chars)',
+        'summary_en (English summary, 2-3 sentences)',
+        'summary_fa (Persian summary, 2-3 sentences)',
+        'ticker_en (English ticker line, max 120 chars)',
+        'ticker_fa (Persian ticker line, max 120 chars)',
+        'category (one of: tech, business, science, policy, security, general)',
+        'tags (array of 3-5 lowercase keywords)',
+        '',
+        'Return ONLY valid JSON. No markdown fences. No explanation.',
+        '',
+        'SOURCE:',
+        'Title: '+title,
+        'URL: '+sourceUrl,
+        'Excerpt: '+(item.text || item.excerpt || title).slice(0, 1200)
+      ].join('\n');
+
+      try{
+        const result = await Router.executeWithFallback('ai_generate', async (provider, apiKey)=>{
+          return await AIAdapters[provider.id]({
+            apiKey,
+            model: provider.models[0],
+            messages:[
+              { role:'system', content:'You return only valid JSON. Never include markdown fences.' },
+              { role:'user', content: prompt }
+            ],
+            temperature: 0.3,
+            maxTokens: 800,
+            signal: ctx.signal
+          });
+        });
+
+        let parsed = null;
+        try{
+          const cleaned = result.text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+          parsed = JSON.parse(cleaned);
+        }catch(parseErr){
+          const m = result.text.match(/\{[\s\S]*\}/);
+          if(m){
+            try{ parsed = JSON.parse(m[0]); }catch(e2){ parsed = null; }
+          }
+        }
+
+        if(!parsed){
+          throw Object.assign(new Error('AI returned unparseable JSON'), {code:'VALIDATION'});
+        }
+
+        results.push(Object.assign({}, item, {
+          title_en: parsed.title_en || title,
+          title_fa: parsed.title_fa || title,
+          summary_en: parsed.summary_en || '',
+          summary_fa: parsed.summary_fa || '',
+          ticker_en: parsed.ticker_en || '',
+          ticker_fa: parsed.ticker_fa || '',
+          category: parsed.category || 'general',
+          tags: parsed.tags || [],
+          generated_by: result.provider,
+          generated_model: result.model,
+          generated_tokens: result.tokens,
+          generated_at: nowISO()
+        }));
+
+        Providers.recordQuality(result.provider, parsed.title_fa ? 0.85 : 0.5);
+      }catch(err){
+        // Fallback to local extractive summary
+        const firstSentence = title.split(/[.!?]\s/)[0] || title;
+        results.push(Object.assign({}, item, {
+          title_en: title,
+          title_fa: title,
+          summary_en: firstSentence.slice(0,160),
+          summary_fa: firstSentence.slice(0,160),
+          ticker_en: (item.category||'general').toUpperCase()+': '+title.slice(0,100),
+          ticker_fa: (item.category||'general').toUpperCase()+': '+title.slice(0,100),
+          category: item.category || 'general',
+          tags: [],
+          generated_by: 'local.fallback',
+          generated_at: nowISO(),
+          _ai_error: String(err.message||err)
+        }));
+      }
+    }
+
+    const providers = [...new Set(results.map(r=>r.generated_by))];
+    return {
+      output: results,
+      provider: providers.join('+') || 'local.fallback',
+      meta:{ count:results.length, providers },
+      quality: results.some(r=>r.generated_by!=='local.fallback') ? 0.85 : 0.5
+    };
+  },
+
+  /* ── AI_TRANSLATE ─────────────────────────────────────────────────── */
+  async AI_TRANSLATE(ctx, node, deps){
+    const items = Array.isArray(deps.input) ? deps.input : [deps.input];
+    const targetLang = node.config.target_lang || 'fa';
+
+    const results = [];
+    for(const item of items.slice(0, node.config.max_items || 3)){
+      const text = item.summary_en || item.title_en || item.title || '';
+      if(!text){ results.push(item); continue; }
+
+      const prompt = 'Translate the following text into '+(targetLang==='fa'?'Persian (Farsi)':'English')+'. '
+        + 'Return ONLY the translation, no explanation, no quotes.\n\nTEXT:\n'+text;
+
+      try{
+        const result = await Router.executeWithFallback('ai_translate', async (provider, apiKey)=>{
+          return await AIAdapters[provider.id]({
+            apiKey, model:provider.models[0],
+            messages:[
+              { role:'system', content:'You are a professional translator. Return only the translation.' },
+              { role:'user', content:prompt }
+            ],
+            temperature:0.2, maxTokens:500, signal:ctx.signal
+          });
+        });
+        results.push(Object.assign({}, item, {
+          ['summary_'+targetLang]: result.text.trim(),
+          translated_by: result.provider
+        }));
+      }catch(err){
+        results.push(Object.assign({}, item, {
+          _translate_error: String(err.message||err)
+        }));
+      }
+    }
+
+    return { output: results, provider:'ai_translate', meta:{ target:targetLang, count:results.length } };
+  },
+
+  /* ── AI_SUMMARIZE ─────────────────────────────────────────────────── */
+  async AI_SUMMARIZE(ctx, node, deps){
+    const input = deps.input;
+    const text = typeof input === 'string' ? input : JSON.stringify(input).slice(0,3000);
+    const prompt = 'Summarize the following content in '+ (node.config.max_words||100) +' words. '
+      + 'Return only the summary.\n\nCONTENT:\n'+text;
+
+    const result = await Router.executeWithFallback('ai_summarize', async (provider, apiKey)=>{
+      return await AIAdapters[provider.id]({
+        apiKey, model:provider.models[0],
+        messages:[
+          { role:'system', content:'You are a concise summarizer.' },
+          { role:'user', content:prompt }
+        ],
+        temperature:0.3, maxTokens:400, signal:ctx.signal
+      });
+    });
+
+    return { output:{ summary:result.text.trim() }, provider:result.provider, meta:{ tokens:result.tokens } };
+  },
+
+  /* ── AI_CLASSIFY ──────────────────────────────────────────────────── */
+  async AI_CLASSIFY(ctx, node, deps){
+    const items = Array.isArray(deps.input) ? deps.input : [deps.input];
+    const categories = node.config.categories || ['tech','business','science','policy','security','general'];
+
+    const results = [];
+    for(const item of items.slice(0, node.config.max_items || 5)){
+      const text = (item.title || '') + ' ' + (item.summary_en || '');
+      const prompt = 'Classify this text into EXACTLY one category from: '+categories.join(', ')+'. '
+        + 'Return ONLY the category word, nothing else.\n\nTEXT:\n'+text.slice(0,600);
+
+      try{
+        const result = await Router.executeWithFallback('ai_classify', async (provider, apiKey)=>{
+          return await AIAdapters[provider.id]({
+            apiKey, model:provider.models[provider.models.length-1] || provider.models[0],
+            messages:[{ role:'user', content:prompt }],
+            temperature:0.1, maxTokens:20, signal:ctx.signal
+          });
+        });
+        const cat = result.text.trim().toLowerCase().replace(/[^a-z]/g,'');
+        results.push(Object.assign({}, item, {
+          category: categories.includes(cat) ? cat : 'general',
+          classified_by: result.provider
+        }));
+      }catch(err){
+        results.push(Object.assign({}, item, { category:item.category||'general', _classify_error:String(err.message||err) }));
+      }
+    }
+
+    return { output:results, provider:'ai_classify', meta:{ count:results.length } };
+  },
+
+  /* ── HTTP_FETCH ───────────────────────────────────────────────────── */
+  async HTTP_FETCH(ctx, node, deps){
+    const url = deps.url;
+    if(!url) throw Object.assign(new Error('Missing url'), {code:'VALIDATION'});
+    const t0 = nowMs();
+    const res = await fetch(url, { signal:ctx.signal, headers:{ 'Accept':'application/json' } });
+    const ms = nowMs()-t0;
+    if(!res.ok){
+      const e = new Error('HTTP '+res.status+' from '+url);
+      e.code = res.status===429?'RATE_LIMIT':res.status>=500?'DEPENDENCY':'PERMANENT';
+      throw e;
+    }
+    return { output: await res.json(), provider:'http.fetch', meta:{ url, status:res.status, duration_ms:ms } };
+  },
+
+  /* ── TRANSFORM ────────────────────────────────────────────────────── */
+  async TRANSFORM(ctx, node, deps){
+    const input = deps.input;
+    const mode = node.config.mode || 'normalize_hn';
+    let out;
+    if(mode==='normalize_hn'){
+      out = (Array.isArray(input)?input:[input]).filter(Boolean).map(it=>({
+        id:String(it.id??''),
+        title:String(it.title||it.text||'').trim(),
+        source_name:'Hacker News',
+        source_url: it.url || ('https://news.ycombinator.com/item?id='+it.id),
+        canonical_url:(it.url||'').split('#')[0].replace(/\/$/,''),
+        score:Number(it.score||0),
+        author: it.by || 'unknown',
+        published_at: it.time ? new Date(it.time*1000).toISOString() : null
+      }));
+    } else {
+      out = input;
+    }
+    return { output:out, provider:'local.rules.text', meta:{ mode, count:(out||[]).length } };
+  },
+
+  /* ── DEDUPLICATE ──────────────────────────────────────────────────── */
+  async DEDUPLICATE(ctx, node, deps){
+    const arr = Array.isArray(deps.input)?deps.input:[];
+    const seen = new Set(); const kept = []; let dropped = 0;
+    for(const it of arr){
+      const key = (it.canonical_url || it.source_url || it.id || '').toLowerCase();
+      if(!key){ kept.push(it); continue; }
+      if(seen.has(key)){ dropped++; continue; }
+      seen.add(key); kept.push(it);
+    }
+    return { output:kept, provider:'local.rules.text', meta:{ in:arr.length, out:kept.length, dropped } };
+  },
+
+  /* ── VALIDATE ─────────────────────────────────────────────────────── */
+  async VALIDATE(ctx, node, deps){
+    const arr = Array.isArray(deps.input)?deps.input:[];
+    const required = node.config.required_fields || ['title_en','title_fa','summary_en','summary_fa','ticker_en','ticker_fa'];
+    const errors = []; const valid = [];
+    for(const it of arr){
+      const missing = required.filter(k=>!it[k]);
+      if(missing.length) errors.push({ id:it.id, missing });
+      else valid.push(it);
+    }
+    return { output:{ valid, invalid:errors, total:arr.length }, provider:'local.validator.schema', meta:{ valid_count:valid.length } };
+  },
+
+  /* ── QUALITY_GATE ─────────────────────────────────────────────────── */
+  async QUALITY_GATE(ctx, node, deps){
+    const { valid=[], invalid=[] } = deps.input||{};
+    const threshold = node.config.threshold ?? 0.5;
+    const total = valid.length + invalid.length;
+    const validRatio = total ? valid.length/total : 0;
+    const hasFields = valid.every(v=>v.title_en&&v.title_fa&&v.summary_en&&v.summary_fa);
+    const score = +(0.6*validRatio + 0.4*(hasFields?1:0)).toFixed(3);
+    if(score < threshold){
+      const e = new Error('Quality gate failed: '+score+' < '+threshold);
+      e.code='VALIDATION'; e.details={score,threshold}; throw e;
+    }
+    return { output:{ score, threshold, valid, invalid, passed:true }, provider:'local.validator.schema', meta:{score} };
+  },
+
+  /* ── APPROVAL ─────────────────────────────────────────────────────── */
+  async APPROVAL(ctx, node, deps){
+    const approval = {
+      approval_id:uid('apr'), execution_id:ctx.executionId, node_id:node.id,
+      requested_at:nowISO(), requested_by:'system', status:'PENDING',
+      payload_preview:JSON.stringify(deps.input).slice(0,240),
+      risk_level: node.config.risk_level||'medium',
+      expires_at:new Date(Date.now()+24*3600*1000).toISOString(),
+      approved_at:null, approved_by:null, rejection_reason:null
+    };
+    throw Object.assign(new Error('Awaiting human approval'), {code:'APPROVAL_PENDING', approval});
+  },
+
+  /* ── PUBLISH (staging) ────────────────────────────────────────────── */
+  async PUBLISH(ctx, node, deps){
+    const items = deps.input.valid || deps.input || [];
+    const payload = {
+      published_at:nowISO(), target:node.config.target||'staging',
+      items:items.map(it=>({
+        title_en:it.title_en, title_fa:it.title_fa,
+        summary_en:it.summary_en, summary_fa:it.summary_fa,
+        ticker_en:it.ticker_en, ticker_fa:it.ticker_fa,
+        source_name:it.source_name, source_url:it.source_url, category:it.category
+      })),
+      count: items.length
+    };
+    const idemKey = hashObj({workflow:ctx.workflowId, v:ctx.workflowVersion, node:node.id, payload});
+    const existing = Artifacts.byIdemKey(idemKey);
+    if(existing) return { output:{artifact_id:existing.artifact_id, idempotent_reuse:true}, provider:'local.publish.staging', meta:{reused:true} };
+
+    const art = Artifacts.create({
+      type:'application/json', name:'staging-publish-'+ctx.executionId+'.json',
+      workflow_id:ctx.workflowId, execution_id:ctx.executionId,
+      content:JSON.stringify(payload,null,2),
+      metadata:{ target:payload.target, count:payload.count, idem_key:idemKey }
+    });
+    return { output:{artifact_id:art.artifact_id, target:payload.target, count:payload.count}, provider:'local.publish.staging', meta:{idempotency_key:idemKey} };
+  },
+
+  /* ── REPORT ───────────────────────────────────────────────────────── */
+  async REPORT(ctx, node, deps){
+    const ex = Executions.get(ctx.executionId);
+    const html = Reports.renderExecutionHTML(ex);
+    const art = Artifacts.create({
+      type:'text/html', name:'execution-report-'+ctx.executionId+'.html',
+      workflow_id:ctx.workflowId, execution_id:ctx.executionId,
+      content:html, metadata:{ self_contained:true }
+    });
+    return { output:{artifact_id:art.artifact_id}, provider:'local.rules.text', meta:{} };
+  }
+};
+
+/* ── ERROR CLASSIFICATION + RETRY ───────────────────────────────────── */
+const RETRYABLE = new Set(['TRANSIENT','RATE_LIMIT','NETWORK','DEPENDENCY']);
+function classifyError(err){
+  const msg = String(err&&(err.message||err)||'').toLowerCase();
+  const code = err&&err.code?String(err.code).toUpperCase():'';
+  if(code==='ABORT'||(err&&err.name==='AbortError')) return 'CANCELLED';
+  if(code==='NO_PROVIDER') return 'DEPENDENCY';
+  if(code==='VALIDATION') return 'VALIDATION';
+  if(code==='AUTH') return 'AUTH';
+  if(code==='RATE_LIMIT') return 'RATE_LIMIT';
+  if(code==='ALL_PROVIDERS_FAILED') return 'DEPENDENCY';
+  if(/429|rate.?limit/.test(msg)) return 'RATE_LIMIT';
+  if(/401|403|unauthor|forbidden/.test(msg)) return 'AUTH';
+  if(/400|validation|invalid|schema/.test(msg)) return 'VALIDATION';
+  if(/timeout|timed out/.test(msg)) return 'TRANSIENT';
+  if(/network|failed to fetch|offline/.test(msg)) return 'NETWORK';
+  if(/5\d\d|server|unavailable/.test(msg)) return 'DEPENDENCY';
+  return 'UNKNOWN';
+}
+function isRetryable(kind){ return RETRYABLE.has(kind); }
+function backoffMs(attempt, base=800){
+  const exp = Math.min(base*Math.pow(2,attempt-1), 10000);
+  return Math.round(exp + Math.random()*exp*0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. WORKFLOW REGISTRY
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Workflows = {
+  list:{},
+  register(def){
+    if(!def.workflow_id) throw new Error('workflow_id required');
+    if(!def.nodes||!def.nodes.length) throw new Error('nodes required');
+    this.list[def.workflow_id] = def;
+  },
+  get(id){ return this.list[id]; },
+  all(){ return Object.values(this.list); }
+};
+
+/* ── News Pipeline with REAL AI agents ─────────────────────────────── */
+Workflows.register({
+  workflow_id:'news_pipeline',
+  workflow_name:'NONONICK Live News Pipeline',
+  version:'3.0.0',
+  description:'Collects news, normalizes, deduplicates, generates bilingual summaries via real AI agents (Groq/OpenRouter/Gemini), validates, gates on quality, requests approval, publishes to staging.',
+  category:'NEWS', owner:'studio@nononick', status:'ACTIVE', risk_level:'medium',
+  trigger:{ type:'manual' },
+  input_schema:{
+    type:'object', required:['source'],
+    properties:{
+      source:{ type:'string', enum:['hackernews_top'], default:'hackernews_top' },
+      limit:{ type:'integer', minimum:1, maximum:10, default:3 },
+      language:{ type:'string', enum:['en','fa','both'], default:'both' }
+    }
+  },
+  output_schema:{ type:'object', properties:{ items:{type:'array'}, publish_target:{type:'string'} } },
+  nodes:[
+    { id:'n_collect',   name:'Collect',        type:'HTTP_FETCH',   config:{ source:'hackernews_top' } },
+    { id:'n_normalize', name:'Normalize',      type:'TRANSFORM',    config:{ mode:'normalize_hn' } },
+    { id:'n_dedupe',    name:'Deduplicate',    type:'DEDUPLICATE',  config:{} },
+    { id:'n_generate',  name:'AI Generate',    type:'AI_GENERATE',  config:{ max_items:3 } },
+    { id:'n_validate',  name:'Validate',       type:'VALIDATE',     config:{ required_fields:['title_en','title_fa','summary_en','summary_fa'] } },
+    { id:'n_quality',   name:'Quality Gate',   type:'QUALITY_GATE', config:{ threshold:0.5 } },
+    { id:'n_approval',  name:'Human Approval', type:'APPROVAL',     config:{ risk_level:'medium' } },
+    { id:'n_publish',   name:'Publish',        type:'PUBLISH',      config:{ target:'staging' } },
+    { id:'n_report',    name:'Report',         type:'REPORT',       config:{} }
+  ],
+  dependencies:['http.fetch','groq','openrouter','gemini','local.validator.schema','manual.approval','local.publish.staging'],
+  routing_policy:{ prefer:'measured_history', quality_weight:0.45, reliability_weight:0.30, latency_weight:0.15, cost_weight:0.10 },
+  validation_policy:{ schema_strict:true },
+  approval_policy:{ required:true, node_id:'n_approval', risk_level:'medium' },
+  retry_policy:{ max_attempts:3, retryable:['TRANSIENT','RATE_LIMIT','NETWORK','DEPENDENCY'], backoff_ms:800 },
+  timeout_policy:{ per_node_ms:45000, per_execution_ms:180000 },
+  security_policy:{ secrets_required:true, secrets:['GROQ_API_KEY','OPENROUTER_API_KEY','GEMINI_API_KEY'] },
+  publish_targets:['staging'],
+  rollback_policy:{ compensable:false },
+  observability:{ trace:true, metrics:true, events:true },
+  metrics:['duration_ms','nodes_ok','nodes_failed','retries','quality_score','provider_latency','tokens_used'],
+  version_history:[
+    { version:'3.0.0', created_at:nowISO(), author:'system', change_summary:'Real AI agents: Groq + OpenRouter + Gemini', risk_level:'medium', status:'ACTIVE' },
+    { version:'1.0.0', created_at:nowISO(), author:'system', change_summary:'Initial with local stub', risk_level:'medium', status:'DEPRECATED' }
+  ]
+});
+
+/* ── AI Content Pipeline (blog/social) ─────────────────────────────── */
+Workflows.register({
+  workflow_id:'content_pipeline',
+  workflow_name:'NONONICK AI Content Pipeline',
+  version:'1.0.0',
+  description:'Takes a topic, generates bilingual article content via real AI agents, validates, and prepares social snippets.',
+  category:'CONTENT', owner:'studio@nononick', status:'ACTIVE', risk_level:'low',
+  trigger:{ type:'manual' },
+  input_schema:{
+    type:'object', required:['topic'],
+    properties:{
+      topic:{ type:'string' },
+      tone:{ type:'string', enum:['professional','casual','editorial'], default:'editorial' },
+      max_words:{ type:'integer', minimum:50, maximum:800, default:200 }
+    }
+  },
+  output_schema:{ type:'object', properties:{ article:{type:'object'} } },
+  nodes:[
+    { id:'c_generate', name:'AI Generate',  type:'AI_GENERATE', config:{ max_items:1 } },
+    { id:'c_translate',name:'AI Translate', type:'AI_TRANSLATE',config:{ target_lang:'fa', max_items:1 } },
+    { id:'c_summarize',name:'AI Summarize', type:'AI_SUMMARIZE',config:{ max_words:80 } },
+    { id:'c_report',   name:'Report',       type:'REPORT',      config:{} }
+  ],
+  dependencies:['groq','openrouter','gemini'],
+  routing_policy:{ prefer:'measured_history' },
+  validation_policy:{ schema_strict:false },
+  approval_policy:{ required:false },
+  retry_policy:{ max_attempts:3, retryable:['TRANSIENT','RATE_LIMIT','NETWORK','DEPENDENCY'], backoff_ms:800 },
+  timeout_policy:{ per_node_ms:60000 },
+  security_policy:{ secrets_required:true },
+  publish_targets:[],
+  rollback_policy:{ compensable:false },
+  observability:{ trace:true, metrics:true, events:true },
+  metrics:['duration_ms','tokens_used','provider_used'],
+  version_history:[
+    { version:'1.0.0', created_at:nowISO(), author:'system', change_summary:'Initial AI content workflow', risk_level:'low', status:'ACTIVE' }
+  ]
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. ARTIFACT STORE
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Artifacts = {
+  list:[],
+  byIdemKey(key){ return this.list.find(a=>a.metadata&&a.metadata.idem_key===key); },
+  create({ type, name, workflow_id, execution_id, content, metadata }){
+    const art = {
+      artifact_id:uid('art'), type:type||'application/octet-stream',
+      mime_type:type||'application/octet-stream', name:name||'artifact',
+      created_at:nowISO(), workflow_id, execution_id,
+      content_hash:hash32(String(content||'')), version:1,
+      size:String(content||'').length,
+      storage_location:'local://artifacts/'+uid('f'),
+      metadata:metadata||{}, content:String(content||'')
+    };
+    this.list.unshift(art);
+    if(this.list.length>300) this.list.pop();
+    EventStore.emit('artifact.created', execution_id, { artifact_id:art.artifact_id, name:art.name, type:art.type });
+    return art;
+  },
+  get(id){ return this.list.find(a=>a.artifact_id===id); },
+  forExecution(id){ return this.list.filter(a=>a.execution_id===id); }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. EXECUTION STORE + ENGINE
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Executions = {
+  list:[],
+  get(id){ return this.list.find(e=>e.execution_id===id); },
+  add(e){ this.list.unshift(e); if(this.list.length>200) this.list.pop(); }
+};
+
+const Engine = {
+  active:new Map(),
+
+  start(workflowId, input){
+    const wf = Workflows.get(workflowId);
+    if(!wf) throw new Error('Unknown workflow: '+workflowId);
+
+    const ex = {
+      execution_id:uid('exe'), workflow_id:wf.workflow_id, workflow_version:wf.version,
+      status:States.QUEUED, trigger:{type:'manual', at:nowISO()},
+      started_at:nowISO(), finished_at:null, duration_ms:null,
+      input, input_hash:hashObj(input), output:null, output_hash:null,
+      current_node_index:0, waiting_node_id:null, approval_id:null,
+      cancel_requested:false, node_results:{}, events:[], artifacts:[],
+      error_summary:null,
+      metrics:{ nodes_ok:0, nodes_failed:0, retries:0, providers_used:{}, quality_score:null, latency_by_node:{}, total_tokens:0 },
+      trace_id:uid('trace')
+    };
+    ex._workflowInput = input;
+
+    Executions.add(ex);
+    persist();
+    EventStore.emit('workflow.execution.queued', ex.execution_id, { workflow_id:wf.workflow_id, version:wf.version });
+
+    this._run(ex.execution_id).catch(err=>console.error('[engine]', err));
+    return ex;
+  },
+
+  resume(executionId, decision, actor){
+    const ex = Executions.get(executionId);
+    if(!ex||ex.status!==States.WAITING_FOR_APPROVAL) throw new Error('Not waiting for approval');
+    const approval = Approvals.get(ex.approval_id);
+    if(!approval) throw new Error('Approval missing');
+
+    if(decision==='approve'){
+      Approvals.decide(approval.approval_id, 'APPROVED', actor);
+      EventStore.emit('workflow.approval.approved', ex.execution_id, { approval_id:approval.approval_id });
+      ex.current_node_index += 1;
+      ex.waiting_node_id = null;
+      ex.approval_id = null;
+      this._setStatus(ex, States.RUNNING, { reason:'approved' });
+      this._run(executionId).catch(e=>console.error(e));
+    } else {
+      Approvals.decide(approval.approval_id, 'REJECTED', actor, 'Rejected by operator');
+      EventStore.emit('workflow.approval.rejected', ex.execution_id, { approval_id:approval.approval_id });
+      ex.waiting_node_id = null;
+      ex.approval_id = null;
+      ex.error_summary = { code:'APPROVAL_REJECTED', message:'Rejected by operator' };
+      ex.finished_at = nowISO();
+      ex.duration_ms = Date.now()-new Date(ex.started_at).getTime();
+      this._setStatus(ex, States.FAILED);
+    }
+  },
+
+  cancel(executionId){
+    const ex = Executions.get(executionId);
+    if(!ex) return;
+    if([States.SUCCEEDED,States.FAILED,States.CANCELLED,States.ROLLED_BACK].includes(ex.status)) return;
+    ex.cancel_requested = true;
+    const act = this.active.get(executionId);
+    if(act&&act.controller){ try{ act.controller.abort(); }catch(e){} }
+    if(ex.status===States.WAITING_FOR_APPROVAL){
+      if(ex.approval_id){ const a=Approvals.get(ex.approval_id); if(a) a.status='CANCELLED'; }
+      ex.waiting_node_id = null; ex.approval_id = null;
+      this._finalise(ex, States.CANCELLED);
+    } else {
+      this._setStatus(ex, States.CANCELLED);
+    }
+  },
+
+  async _run(executionId){
+    const ex = Executions.get(executionId);
+    if(!ex) return;
+    const wf = Workflows.get(ex.workflow_id);
+    if(!wf){ this._finalise(ex, States.FAILED, 'Workflow missing'); return; }
+
+    if(!this.active.has(executionId)){
+      this.active.set(executionId, { controller:new AbortController() });
+    }
+    const controller = this.active.get(executionId).controller;
+
+    this._setStatus(ex, States.RUNNING);
+
+    const outputs = new Map();
+    for(const [nid,res] of Object.entries(ex.node_results)){
+      if(res&&res.status==='SUCCEEDED'&&res.output!==undefined) outputs.set(nid, res.output);
+    }
+
+    try{
+      for(let i=ex.current_node_index; i<wf.nodes.length; i++){
+        const node = wf.nodes[i];
+        ex.current_node_index = i;
+
+        if(ex.cancel_requested){ this._finalise(ex, States.CANCELLED); this.active.delete(executionId); return; }
+
+        const nodeStart = nowMs();
+        const attempts = [];
+        let succeeded = false;
+        let lastError = null;
+        let attempt = 0;
+        const maxAttempts = (wf.retry_policy&&wf.retry_policy.max_attempts)||1;
+
+        while(attempt<maxAttempts && !succeeded){
+          attempt++;
+          const attemptRec = { attempt_id:uid('att'), n:attempt, started_at:nowISO(), finished_at:null, duration_ms:null, status:'RUNNING', provider:null, error:null };
+          attempts.push(attemptRec);
+          EventStore.emit('workflow.node.started', executionId, { node_id:node.id, node_name:node.name, attempt });
+          pushEvent(ex, 'workflow.node.started', { node_id:node.id, attempt });
+
+          try{
+            const deps = this._buildDeps(ex, wf, node, outputs, controller.signal);
+            const timeoutMs = (wf.timeout_policy&&wf.timeout_policy.per_node_ms)||45000;
+            const exec = NodeExecutors[node.type];
+            if(!exec) throw Object.assign(new Error('No executor: '+node.type), {code:'PERMANENT'});
+
+            const result = await withTimeout(
+              exec({ executionId, workflowId:wf.workflow_id, workflowVersion:wf.version, signal:controller.signal, attempt, workflowInput:ex._workflowInput }, node, deps),
+              timeoutMs, controller.signal
+            );
+
+            attemptRec.finished_at = nowISO();
+            attemptRec.duration_ms = nowMs()-attemptRec.started_at;
+            attemptRec.status = 'SUCCEEDED';
+            attemptRec.provider = result.provider||null;
+
+            const nodeResult = {
+              node_id:node.id, node_name:node.name, node_type:node.type,
+              status:'SUCCEEDED', attempts, output:result.output,
+              provider:result.provider||null, meta:result.meta||{},
+              quality:result.quality??null,
+              started_at:new Date(nodeStart).toISOString(),
+              finished_at:nowISO(), duration_ms:nowMs()-nodeStart
+            };
+            ex.node_results[node.id] = nodeResult;
+            outputs.set(node.id, result.output);
+            ex.metrics.nodes_ok++;
+            ex.metrics.latency_by_node[node.id] = nodeResult.duration_ms;
+            if(result.provider) ex.metrics.providers_used[result.provider] = (ex.metrics.providers_used[result.provider]||0)+1;
+            if(result.quality!=null) ex.metrics.quality_score = result.quality;
+            if(result.meta&&result.meta.tokens) ex.metrics.total_tokens += result.meta.tokens;
+
+            EventStore.emit('workflow.node.completed', executionId, { node_id:node.id, duration_ms:nodeResult.duration_ms, provider:result.provider });
+            pushEvent(ex, 'workflow.node.completed', { node_id:node.id, duration_ms:nodeResult.duration_ms });
+            succeeded = true;
+            persist();
+          }
+          catch(err){
+            // Approval pause — special case, not a failure
+            if(err&&err.code==='APPROVAL_PENDING'){
+              attemptRec.finished_at=nowISO(); attemptRec.duration_ms=nowMs()-attemptRec.started_at;
+              attemptRec.status='WAITING'; attemptRec.error={code:'APPROVAL_PENDING'};
+              const approval = err.approval;
+              Approvals.add(approval);
+              ex.approval_id = approval.approval_id;
+              ex.waiting_node_id = node.id;
+              ex.node_results[node.id] = { node_id:node.id, node_name:node.name, node_type:node.type, status:'WAITING_FOR_APPROVAL', attempts, approval_id:approval.approval_id, started_at:new Date(nodeStart).toISOString(), duration_ms:null };
+              EventStore.emit('workflow.approval.requested', executionId, { approval_id:approval.approval_id, node_id:node.id });
+              pushEvent(ex, 'workflow.approval.requested', { approval_id:approval.approval_id });
+              this._setStatus(ex, States.WAITING_FOR_APPROVAL);
+              persist();
+              this.active.delete(executionId);
+              return;
+            }
+
+            const kind = classifyError(err);
+            attemptRec.finished_at=nowISO(); attemptRec.duration_ms=nowMs()-attemptRec.started_at;
+            attemptRec.status='FAILED';
+            attemptRec.error={code:kind, message:String(err.message||err)};
+            lastError = { kind, error:err };
+
+            EventStore.emit('workflow.node.failed', executionId, { node_id:node.id, attempt, error_code:kind, message:String(err.message||err) });
+            pushEvent(ex, 'workflow.node.failed', { node_id:node.id, attempt, error_code:kind });
+
+            if(ex.cancel_requested||kind==='CANCELLED') break;
+
+            if(isRetryable(kind)&&attempt<maxAttempts){
+              const delay = backoffMs(attempt, (wf.retry_policy&&wf.retry_policy.backoff_ms)||800);
+              ex.metrics.retries++;
+              this._setStatus(ex, States.RETRYING, { node_id:node.id, attempt, next_delay_ms:delay });
+              EventStore.emit('workflow.node.retrying', executionId, { node_id:node.id, attempt, delay_ms:delay, error_code:kind });
+              pushEvent(ex, 'workflow.node.retrying', { node_id:node.id, attempt, delay_ms:delay });
+              persist();
+              await sleep(delay);
+              if(ex.cancel_requested) break;
+            } else break;
+          }
+        }
+
+        if(!succeeded){
+          ex.metrics.nodes_failed++;
+          ex.node_results[node.id] = { node_id:node.id, node_name:node.name, node_type:node.type, status:'FAILED', attempts, error:lastError, started_at:new Date(nodeStart).toISOString(), finished_at:nowISO(), duration_ms:nowMs()-nodeStart };
+          ex.error_summary = { node_id:node.id, code:lastError?lastError.kind:'UNKNOWN', message:lastError?String(lastError.error.message||lastError.error):'Unknown' };
+          this._finalise(ex, States.FAILED);
+          this.active.delete(executionId);
+          return;
+        }
+      }
+
+      const lastOutput = outputs.get(wf.nodes[wf.nodes.length-1].id);
+      ex.output = lastOutput;
+      ex.output_hash = hashObj(lastOutput);
+      this._finalise(ex, States.SUCCEEDED);
+      this.active.delete(executionId);
+    }
+    catch(err){
+      ex.error_summary = { code:classifyError(err), message:String(err.message||err) };
+      this._finalise(ex, States.FAILED);
+      this.active.delete(executionId);
+    }
+  },
+
+  _buildDeps(ex, wf, node, outputs, signal){
+    const idx = wf.nodes.findIndex(n=>n.id===node.id);
+    const prev = idx>0 ? wf.nodes[idx-1] : null;
+    const prevOut = prev ? outputs.get(prev.id) : ex.input;
+
+    switch(node.type){
+      case 'HTTP_FETCH':{
+        const src = (node.config&&node.config.source)||ex.input.source;
+        if(src==='hackernews_top') return { url:'https://hacker-news.firebaseio.com/v0/topstories.json', _limit:clamp(Number(ex.input.limit)||3,1,10) };
+        return { url:ex.input.url };
+      }
+      default: return { input: prevOut };
+    }
+  },
+
+  _setStatus(ex, status, extra){
+    if(!canTransition(ex.status, status)&&ex.status!==status){
+      EventStore.emit('workflow.execution.transition_rejected', ex.execution_id, { from:ex.status, to:status });
+      return;
+    }
+    const from = ex.status;
+    ex.status = status;
+    EventStore.emit('workflow.execution.state_changed', ex.execution_id, { from, to:status, ...(extra||{}) });
+    pushEvent(ex, 'workflow.execution.state_changed', { from, to:status });
+    persist();
+    UI.render();
+  },
+
+  _finalise(ex, status, errMsg){
+    ex.status = status;
+    ex.finished_at = nowISO();
+    ex.duration_ms = Date.now()-new Date(ex.started_at).getTime();
+    if(errMsg&&!ex.error_summary) ex.error_summary = { message:errMsg };
+    pushEvent(ex, 'workflow.execution.finished', { status });
+    EventStore.emit('workflow.execution.finished', ex.execution_id, { status, duration_ms:ex.duration_ms });
+    persist();
+    UI.render();
+  }
+};
+
+function pushEvent(ex, type, data){
+  ex.events.push({ id:uid('evt'), type, time:nowISO(), data:data||{} });
+  if(ex.events.length>400) ex.events.shift();
+}
+function withTimeout(promise, ms, signal){
+  return new Promise((resolve,reject)=>{
+    const t = setTimeout(()=>{ const e=new Error('Timeout '+ms+'ms'); e.code='TRANSIENT'; reject(e); }, ms);
+    if(signal){
+      const onAbort = ()=>{ clearTimeout(t); const e=new Error('Aborted'); e.code='CANCELLED'; e.name='AbortError'; reject(e); };
+      if(signal.aborted){ onAbort(); return; }
+      signal.addEventListener('abort', onAbort, {once:true});
+    }
+    promise.then(v=>{ clearTimeout(t); resolve(v); }).catch(e=>{ clearTimeout(t); reject(e); });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   12. APPROVALS
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Approvals = {
+  list:[],
+  add(a){ this.list.unshift(a); if(this.list.length>200) this.list.pop(); },
+  get(id){ return this.list.find(a=>a.approval_id===id); },
+  pending(){ return this.list.filter(a=>a.status==='PENDING'); },
+  decide(id, status, actor, reason){
+    const a=this.get(id); if(!a) return;
+    a.status=status; a.approved_at=nowISO(); a.approved_by=actor||'admin';
+    if(reason) a.rejection_reason=reason;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   13. PERSISTENCE (localStorage — secrets excluded)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const STORAGE_KEY = 'nononick.workflow.os.v3';
+
+function persist(){
+  try{
+    const payload = {
+      v:3, saved_at:nowISO(),
+      executions: Executions.list.slice(0,80),
+      approvals: Approvals.list.slice(0,80),
+      artifacts: Artifacts.list.slice(0,80).map(a=>({...a, content:a.size>30000?'<!-- truncated -->':a.content})),
+      events: EventStore.events.slice(-300),
+      providers_state: Object.fromEntries(Providers.all().map(p=>[p.id, {
+        availability:p.availability, latency_history_ms:p.latency_history_ms,
+        error_rate:p.error_rate, quality_history:p.quality_history
+      }]))
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }catch(e){ console.warn('[persist]', e); }
+}
+
+function rehydrate(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const p = JSON.parse(raw);
+    if(!p||!Array.isArray(p.executions)) return false;
+    Executions.list = p.executions||[];
+    Approvals.list = p.approvals||[];
+    Artifacts.list = p.artifacts||[];
+    EventStore.events = p.events||[];
+    if(p.providers_state){
+      for(const [id,st] of Object.entries(p.providers_state)){
+        const prov = Providers.get(id); if(prov) Object.assign(prov, st);
+      }
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   14. METRICS + LEARNING
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Metrics = {
+  summary(){
+    const all = Executions.list;
+    const byStatus = all.reduce((a,e)=>{ a[e.status]=(a[e.status]||0)+1; return a; },{});
+    const finished = all.filter(e=>e.duration_ms!=null);
+    const avgDuration = finished.length ? Math.round(finished.reduce((a,e)=>a+e.duration_ms,0)/finished.length) : null;
+    const retries = all.reduce((a,e)=>a+(e.metrics?.retries||0),0);
+    const successes = byStatus[States.SUCCEEDED]||0;
+    const failures = byStatus[States.FAILED]||0;
+    const decided = successes+failures;
+    const successRate = decided ? successes/decided : null;
+    const qualityScores = all.map(e=>e.metrics?.quality_score).filter(x=>x!=null);
+    const avgQuality = qualityScores.length ? qualityScores.reduce((a,b)=>a+b,0)/qualityScores.length : null;
+    const tokens = all.reduce((a,e)=>a+(e.metrics?.total_tokens||0),0);
+    return { total:all.length, byStatus, avgDuration, retries, successRate, avgQuality, tokens };
+  },
+  health(){
+    const s = this.summary();
+    const rate = s.successRate!=null ? s.successRate : 0.95;
+    const q = s.avgQuality!=null ? s.avgQuality : 0.9;
+    return clamp(Math.round((rate*0.7+q*0.3)*1000)/10, 0, 100);
+  }
+};
+
+const Learning = {
+  signals(){
+    const out = [];
+    const all = Executions.list;
+    if(all.length<2){
+      out.push({ title:'Collect more executions', body:'Signals appear after a few runs. Current: '+all.length+'.', severity:'info' });
+      return out;
+    }
+    const retries = all.reduce((a,e)=>a+(e.metrics?.retries||0),0);
+    if(retries/Math.max(1,all.length)>1.2){
+      out.push({ title:'Elevated retry rate', body:retries+' retries across '+all.length+' runs. Consider raising timeouts or reordering fallbacks.', severity:'warn' });
+    }
+    const failCounts = {};
+    for(const e of all){
+      for(const r of Object.values(e.node_results||{})){
+        if(r.status==='FAILED') failCounts[r.node_id]=(failCounts[r.node_id]||0)+1;
+      }
+    }
+    const worst = Object.entries(failCounts).sort((a,b)=>b[1]-a[1])[0];
+    if(worst&&worst[1]>=2) out.push({ title:'Failure hotspot: '+worst[0], body:worst[1]+' failures. Inspect inputs and routing.', severity:'err' });
+
+    const byNode={};
+    for(const e of all){
+      for(const [nid,r] of Object.entries(e.node_results||{})){
+        if(r.status==='SUCCEEDED'&&r.duration_ms){ byNode[nid]=byNode[nid]||[]; byNode[nid].push(r.duration_ms); }
+      }
+    }
+    const slow = Object.entries(byNode).map(([nid,arr])=>[nid,arr.reduce((a,b)=>a+b,0)/arr.length]).sort((a,b)=>b[1]-a[1])[0];
+    if(slow&&slow[1]>2000) out.push({ title:'Bottleneck: '+slow[0], body:'Avg latency '+Math.round(slow[1])+'ms. Consider caching.', severity:'warn' });
+
+    for(const p of Providers.all()){
+      if(p.latency_history_ms.length>=3){
+        const avg = Providers.avgLatency(p.id);
+        if(avg>3000) out.push({ title:'Slow provider: '+p.name, body:'Avg latency '+avg+'ms. Router may deprioritize.', severity:'warn' });
+      }
+    }
+
+    if(!out.length) out.push({ title:'No anomalies detected', body:'Execution metrics are within expected ranges.', severity:'ok' });
+    return out;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   15. HTML REPORT GENERATOR
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Reports = {
+  renderExecutionHTML(ex){
+    if(!ex) return '<!doctype html><title>Report</title><p>Not found.</p>';
+    const wf = Workflows.get(ex.workflow_id)||{ workflow_name:ex.workflow_id, version:ex.workflow_version };
+
+    const nodesHTML = Object.values(ex.node_results||{}).map((r,i)=>{
+      const atts = (r.attempts||[]).map(a=>`<li>attempt ${a.n} — ${esc(a.status)} — ${a.duration_ms?fmtMs(a.duration_ms):'—'}${a.provider?' — '+esc(a.provider):''}${a.error?' — <b>'+esc(a.error.code)+'</b> '+esc(a.error.message):''}</li>`).join('');
+      const outPreview = r.output ? esc(JSON.stringify(r.output,null,2).slice(0,2000)) : '—';
+      return `<details><summary><b>${i+1}. ${esc(r.node_name)}</b> — ${esc(r.status)} — ${r.duration_ms?fmtMs(r.duration_ms):'—'}</summary>
+        <div class="node"><p><b>node_id:</b> ${esc(r.node_id)} · <b>type:</b> ${esc(r.node_type)} · <b>provider:</b> ${esc(r.provider||'—')}</p>
+        <p><b>attempts:</b></p><ul>${atts||'<li>—</li>'}</ul>
+        <p><b>output:</b></p><pre>${outPreview}</pre></div></details>`;
+    }).join('');
+
+    const eventsHTML = (ex.events||[]).map(e=>`<li><span class="t">${esc(e.time)}</span> <b>${esc(e.type)}</b> <code>${esc(JSON.stringify(e.data))}</code></li>`).join('');
+    const artifacts = Artifacts.forExecution(ex.execution_id);
+
+    return `<!doctype html><html lang="${LANG}" dir="${LANG==='fa'?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Report — ${esc(ex.execution_id)}</title>
+<style>
+:root{--bg:#06070a;--fg:#e8eefc;--dim:#8892a6;--cyan:#22d3ee;--violet:#a855f7;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b;--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;line-height:1.55}
+.wrap{max-width:920px;margin:0 auto}h1{font-size:22px;margin:0 0 4px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);margin:28px 0 10px}
+.meta{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--dim);margin-bottom:20px}
+.status{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid;background:transparent}
+.status.SUCCEEDED{color:var(--ok);border-color:rgba(34,197,94,.4)}.status.FAILED{color:var(--err);border-color:rgba(239,68,68,.4)}
+.status.WAITING_FOR_APPROVAL{color:var(--violet);border-color:rgba(168,85,247,.4)}.status.CANCELLED{color:var(--dim);border-color:rgba(255,255,255,.15)}
+.status.RUNNING{color:var(--cyan);border-color:rgba(34,211,238,.4)}.status.RETRYING{color:var(--warn);border-color:rgba(245,158,11,.4)}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+details{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+summary{cursor:pointer;font-size:14px}.node{margin-top:10px;font-size:13px;color:var(--dim)}
+pre{background:rgba(0,0,0,.35);border:1px solid var(--border);padding:10px;border-radius:8px;overflow:auto;font-size:11px;max-height:340px}
+ul{list-style:none;padding-left:0;margin:0;font-size:12px}ul li{padding:6px 0;border-bottom:1px solid var(--border);font-family:ui-monospace,Menlo,monospace}
+ul li:last-child{border-bottom:0}.t{color:var(--dim);margin-right:8px}code{background:rgba(255,255,255,.05);padding:1px 5px;border-radius:5px;font-size:11px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px}.kv dt{color:var(--dim)}.kv dd{margin:0;font-family:ui-monospace,Menlo,monospace}
+</style></head><body><div class="wrap">
+<h1>${esc(wf.workflow_name)} — Execution Report</h1>
+<div class="meta">${esc(ex.execution_id)} · ${esc(ex.workflow_id)}@${esc(ex.workflow_version)} · trace ${esc(ex.trace_id)}</div>
+<div class="card"><dl class="kv">
+<dt>${t('status')}</dt><dd><span class="status ${esc(ex.status)}">${esc(ex.status)}</span></dd>
+<dt>${t('started')}</dt><dd>${esc(ex.started_at)}</dd>
+<dt>${t('duration')}</dt><dd>${ex.duration_ms!=null?fmtMs(ex.duration_ms):'—'}</dd>
+<dt>${t('inputHash')}</dt><dd>${esc(ex.input_hash)}</dd>
+<dt>${t('outputHash')}</dt><dd>${esc(ex.output_hash||'—')}</dd>
+<dt>${t('retryCount')}</dt><dd>${ex.metrics?.retries||0}</dd>
+<dt>${t('nodesOkFail')}</dt><dd>${ex.metrics?.nodes_ok||0} / ${ex.metrics?.nodes_failed||0}</dd>
+<dt>${t('tokensUsed')}</dt><dd>${ex.metrics?.total_tokens||0}</dd>
+</dl></div>
+<h2>${t('inputTab')}</h2><div class="card"><pre>${esc(JSON.stringify(ex.input,null,2))}</pre></div>
+<h2>${t('processTab')}</h2>${nodesHTML||'<div class="card">No nodes.</div>'}
+<h2>${t('eventsTab')}</h2><div class="card"><ul>${eventsHTML||'<li>—</li>'}</ul></div>
+<h2>${t('outputTab')}</h2><div class="card"><pre>${esc(JSON.stringify(ex.output,null,2).slice(0,6000))}</pre></div>
+${ex.error_summary?`<h2>${t('errorsTab')}</h2><div class="card"><pre>${esc(JSON.stringify(ex.error_summary,null,2))}</pre></div>`:''}
+<h2>${t('artifactsTab')}</h2><div class="card">${artifacts.length?'<ul>'+artifacts.map(a=>`<li>${esc(a.name)} · ${esc(a.type)} · ${a.size} bytes</li>`).join('')+'</ul>':'—'}</div>
+</div></body></html>`;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   16. UI RENDERING
+   ═══════════════════════════════════════════════════════════════════════════ */
+const UI = {
+  current:'home',
+  _inspectorExec:null,
+  _inspectorTab:'timeline',
+
+  go(screen){
+    this.current = screen;
+    $$('.screen').forEach(s=>s.classList.toggle('active', s.dataset.screen===screen));
+    $$('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.go===screen));
+    this.render();
+    const el = $('.screen[data-screen="'+screen+'"]');
+    if(el) el.scrollTop = 0;
+  },
+
+  render(){
+    const running = Executions.list.filter(e=>[States.RUNNING,States.RETRYING].includes(e.status)).length;
+    const pending = Approvals.pending().length;
+    const failed = Executions.list.filter(e=>e.status===States.FAILED).length;
+
+    const rB = $('#navRunsBadge');
+    rB.classList.toggle('on', running>0); rB.textContent = running;
+    const aB = $('#navAppBadge');
+    aB.classList.toggle('on', pending>0); aB.textContent = pending;
+
+    const sysPill = $('#sysPill');
+    sysPill.classList.remove('offline','err');
+    if(!navigator.onLine){ sysPill.classList.add('offline'); $('#sysPillText').textContent='OFFLINE'; }
+    else if(failed>3){ sysPill.classList.add('err'); $('#sysPillText').textContent='DEGRADED'; }
+    else $('#sysPillText').textContent='ONLINE';
+
+    if(this.current==='home') this.renderHome(running, pending, failed);
+    if(this.current==='workflows') this.renderWorkflows();
+    if(this.current==='runs') this.renderRuns();
+    if(this.current==='approvals') this.renderApprovals();
+    if(this.current==='system') this.renderSystem();
+
+    if($('#inspector').classList.contains('on') && this._inspectorExec){
+      this.renderInspector(this._inspectorExec);
+    }
+  },
+
+  renderHome(running, pending, failed){
+    $('#healthScore').innerHTML = Metrics.health()+'<small>%</small>';
+    $('#hRunning').textContent = running;
+    $('#hWaiting').textContent = pending;
+    $('#hFailed').textContent = failed;
+    $('#hTotal').textContent = Executions.list.length;
+
+    // Agent cards
+    const agentProviders = ['groq','openrouter','gemini'];
+    $('#agentCards').innerHTML = agentProviders.map(id=>{
+      const p = Providers.get(id);
+      if(!p) return '';
+      const keySet = Secrets.has(id);
+      const avgLat = Providers.avgLatency(id);
+      const avgQ = Providers.avgQuality(id);
+      return `<div class="card">
+        <div class="row">
+          <span class="agent-badge ${id}">${esc(p.name)}</span>
+          <span style="margin-left:auto;font-size:10px;font-weight:700;color:${keySet?'var(--ok)':'var(--mute)'}">
+            ${keySet?t('keysSet'):t('keysNotSet')}
+          </span>
+        </div>
+        <p style="margin-top:6px;font-size:11px">
+          ${esc(p.models[0]||'')}
+          ${avgLat!=null?' · '+avgLat+'ms':''}
+          ${avgQ!=null?' · q '+avgQ.toFixed(2):''}
+        </p>
+      </div>`;
+    }).join('');
+
+    const runningExs = Executions.list.filter(e=>[States.RUNNING,States.RETRYING,States.QUEUED].includes(e.status)).slice(0,3);
+    $('#homeRunning').innerHTML = runningExs.length ? runningExs.map(e=>this.execCard(e)).join('') : '';
+
+    const pend = Approvals.pending().slice(0,3);
+    $('#homeApprovals').innerHTML = pend.length ? pend.map(a=>this.approvalCard(a)).join('')
+      : '<div class="card"><p style="color:var(--mute)">'+t('noApprovals')+'</p></div>';
+
+    const recent = Executions.list.slice(0,5);
+    $('#homeRecent').innerHTML = recent.length ? recent.map(e=>this.execCard(e)).join('')
+      : '<div class="empty"><b>'+t('noExecutions')+'</b></div>';
+
+    const signals = Learning.signals();
+    $('#homeInsights').innerHTML = signals.map(s=>`
+      <div class="card">
+        <span class="chip s-${s.severity==='err'?'failed':s.severity==='warn'?'retrying':'succeeded'}">
+          <span class="dot"></span>${esc(s.severity)}
+        </span>
+        <h3 style="margin-top:8px">${esc(s.title)}</h3>
+        <p>${esc(s.body)}</p>
+      </div>`).join('');
+  },
+
+  renderWorkflows(){
+    const list = Workflows.all();
+    $('#wfList').innerHTML = list.map(wf=>{
+      const lastEx = Executions.list.find(e=>e.workflow_id===wf.workflow_id);
+      const runs = Executions.list.filter(e=>e.workflow_id===wf.workflow_id).length;
+      return `<div class="card tap" data-wf="${esc(wf.workflow_id)}">
+        <div class="row">
+          <div class="grow"><h3>${esc(wf.workflow_name)}</h3>
+          <p style="margin-top:3px"><code class="k">${esc(wf.workflow_id)}@${esc(wf.version)}</code> · ${esc(wf.category)}</p></div>
+          <span class="chip s-${wf.status==='ACTIVE'?'succeeded':'queued'}"><span class="dot"></span>${esc(wf.status)}</span>
+        </div>
+        <p style="margin-top:8px">${esc(wf.description)}</p>
+        <div class="row" style="margin-top:10px;font-size:11px;color:var(--dim);gap:14px">
+          <span>${wf.nodes.length} nodes</span><span>${runs} runs</span>
+          <span>${lastEx?'last '+fmtTime(lastEx.started_at):'never run'}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    $$('#wfList [data-wf]').forEach(el=>{
+      el.addEventListener('click',()=>UI.openWorkflowSheet(el.dataset.wf));
+    });
+  },
+
+  renderRuns(){
+    const list = Executions.list;
+    $('#runsList').innerHTML = list.length ? list.map(e=>this.execCard(e)).join('') : '<div class="empty"><b>'+t('noExecutions')+'</b></div>';
+    $$('#runsList [data-ex]').forEach(el=>{
+      el.addEventListener('click',()=>UI.openInspector(el.dataset.ex));
+    });
+  },
+
+  renderApprovals(){
+    const pend = Approvals.pending();
+    $('#approvalsList').innerHTML = pend.length ? pend.map(a=>this.approvalCard(a)).join('')
+      : '<div class="empty"><b>'+t('noApprovals')+'</b></div>';
+    const done = Approvals.list.filter(a=>a.status!=='PENDING').slice(0,8);
+    $('#approvalHistory').innerHTML = done.length ? done.map(a=>`
+      <div class="card"><div class="row">
+        <span class="chip s-${a.status==='APPROVED'?'succeeded':a.status==='REJECTED'?'failed':'cancelled'}"><span class="dot"></span>${esc(a.status)}</span>
+        <span style="font-size:11px;color:var(--dim);margin-left:auto">${fmtTime(a.requested_at)}</span>
+      </div>
+      <p style="margin-top:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px">${esc(a.approval_id)} · node ${esc(a.node_id)}</p></div>`).join('') : '';
+
+    $$('#approvalsList [data-apr]').forEach(el=>{
+      el.addEventListener('click',()=>UI.openApprovalSheet(el.dataset.apr));
+    });
+  },
+
+  renderSystem(){
+    // Providers
+    $('#provList').innerHTML = Providers.all().map(p=>{
+      const st = p.availability==='UP'?'up':p.availability==='DOWN'?'down':'deg';
+      const lat = Providers.avgLatency(p.id);
+      const q = Providers.avgQuality(p.id);
+      const keySet = Secrets.has(p.id);
+      return `<div class="prov"><div class="grow">
+        <b>${esc(p.name)} ${keySet?'<span style="color:var(--ok);font-size:9px">●</span>':''}</b>
+        <small>${esc(p.id)} · ${esc(p.category)} · ${p.rate_limit.rpm||'—'} RPM</small>
+        <small style="display:block;margin-top:2px">${esc(p.models.slice(0,2).join(', '))}${lat!=null?' · '+lat+'ms':''}${q!=null?' · q '+q.toFixed(2):''}</small>
+      </div><span class="st ${st}">${esc(p.availability)}</span></div>`;
+    }).join('');
+
+    // API keys section
+    $('#keySection').innerHTML = ['groq','openrouter','gemini'].map(id=>{
+      const p = Providers.get(id);
+      const keySet = Secrets.has(id);
+      return `<div class="card">
+        <div class="row">
+          <div class="grow"><h3>${esc(p.name)}</h3>
+          <p style="font-size:10px;color:var(--dim);margin-top:2px">${esc(p.secret_env)}</p></div>
+          <span class="chip s-${keySet?'succeeded':'queued'}"><span class="dot"></span>${keySet?t('keysSet'):t('keysNotSet')}</span>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <input class="input" type="password" id="key-${id}" placeholder="sk-..." value="${keySet?'••••••••':''}">
+        </div>
+        <div class="btn-row">
+          <button class="btn sm primary" data-savekey="${id}">${t('saveKey')}</button>
+          ${keySet?'<button class="btn sm danger" data-clearkey="'+id+'">'+t('clearKey')+'</button>':''}
+        </div>
+      </div>`;
+    }).join('') + `<p style="font-size:11px;color:var(--mute);padding:0 4px">${t('keyNote')}</p>`;
+
+    $$('#keySection [data-savekey]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const id = btn.dataset.savekey;
+        const inp = $('#key-'+id);
+        if(inp && inp.value.trim()){ Secrets.set(id, inp.value.trim()); toast('Key saved for '+id); this.renderSystem(); }
+      });
+    });
+    $$('#keySection [data-clearkey]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        Secrets.clear(btn.dataset.clearkey); toast('Key cleared'); this.renderSystem();
+      });
+    });
+
+    // Metrics
+    const s = Metrics.summary();
+    $('#sysMetrics').innerHTML = `
+      <div class="mcard"><span>Total</span><b>${s.total}</b><small>executions</small></div>
+      <div class="mcard"><span>Success</span><b>${s.successRate!=null?(s.successRate*100).toFixed(1)+'%':'—'}</b><small>rate</small></div>
+      <div class="mcard"><span>Avg duration</span><b>${s.avgDuration!=null?fmtMs(s.avgDuration):'—'}</b><small>end-to-end</small></div>
+      <div class="mcard"><span>Retries</span><b>${s.retries}</b><small>total</small></div>
+      <div class="mcard"><span>Quality</span><b>${s.avgQuality!=null?s.avgQuality.toFixed(2):'—'}</b><small>avg score</small></div>
+      <div class="mcard"><span>Tokens</span><b>${s.tokens}</b><small>AI tokens used</small></div>`;
+  },
+
+  execCard(e){
+    const wf = Workflows.get(e.workflow_id);
+    const name = wf?wf.workflow_name:e.workflow_id;
+    const chipCls = 's-'+String(e.status).toLowerCase().replace(/_/g,'-');
+    const dur = e.duration_ms!=null?fmtMs(e.duration_ms):([States.RUNNING,States.RETRYING].includes(e.status)?'running':'—');
+    const progress = this.progressOf(e);
+    return `<div class="card tap" data-ex="${esc(e.execution_id)}">
+      <div class="row"><div class="grow"><h3>${esc(name)}</h3>
+      <p style="margin-top:3px;font-family:ui-monospace,Menlo,monospace">${esc(e.execution_id)} · v${esc(e.workflow_version)}</p></div>
+      <span class="chip ${chipCls}"><span class="dot"></span>${esc(e.status)}</span></div>
+      <div class="row" style="margin-top:10px;font-size:11px;color:var(--dim);gap:14px">
+        <span>${dur}</span><span>${e.metrics?.nodes_ok||0} ok</span>
+        ${e.metrics?.retries?'<span>'+e.metrics.retries+' retries</span>':''}
+        <span style="margin-left:auto">${fmtTime(e.started_at)}</span>
+      </div>
+      ${progress!=null?'<div class="progress"><i style="width:'+progress+'%"></i></div>':''}
+    </div>`;
+  },
+
+  progressOf(e){
+    const wf = Workflows.get(e.workflow_id);
+    if(!wf) return null;
+    const done = Object.values(e.node_results||{}).filter(r=>r.status==='SUCCEEDED').length;
+    if(e.status===States.SUCCEEDED) return 100;
+    return Math.round((done/wf.nodes.length)*100);
+  },
+
+  approvalCard(a){
+    return `<div class="card tap" data-apr="${esc(a.approval_id)}">
+      <div class="row"><div class="grow"><h3>Approval · ${esc(a.node_id)}</h3>
+      <p style="margin-top:3px;font-family:ui-monospace,Menlo,monospace">${esc(a.approval_id)} · risk ${esc(a.risk_level)}</p></div>
+      <span class="chip s-waiting"><span class="dot"></span>PENDING</span></div>
+      <p style="margin-top:8px;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.payload_preview||'—')}</p>
+      <div class="row" style="margin-top:8px;font-size:11px;color:var(--mute)">
+        <span>${fmtTime(a.requested_at)}</span>
+        <span style="margin-left:auto">${esc(a.execution_id)}</span>
+      </div>
+    </div>`;
+  },
+
+  openSheet(title, sub, bodyHTML, onMount){
+    $('#sheetTitle').textContent = title;
+    $('#sheetSub').textContent = sub||'';
+    $('#sheetBody').innerHTML = bodyHTML;
+    $('#sheet').classList.add('on');
+    $('#sheetBack').classList.add('on');
+    if(onMount) onMount($('#sheetBody'));
+  },
+  closeSheet(){ $('#sheet').classList.remove('on'); $('#sheetBack').classList.remove('on'); },
+
+  openWorkflowSheet(wfId){
+    const wf = Workflows.get(wfId);
+    if(!wf) return;
+    const nodesHTML = wf.nodes.map((n,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);margin-bottom:6px;font-size:12px">
+        <div style="width:26px;height:26px;border-radius:8px;flex:0 0 auto;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04121a;display:grid;place-items:center;font-weight:800;font-size:11px">${i+1}</div>
+        <div style="flex:1;min-width:0"><b style="display:block;font-size:12px">${esc(n.name)}</b>
+        <small style="font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,monospace">${esc(n.type)}</small></div>
+      </div>`).join('');
+
+    const body = `
+      <div class="card"><h3>${esc(wf.workflow_name)}</h3><p>${esc(wf.description)}</p></div>
+      <div class="section-title">${t('inputTab')}</div>
+      <pre class="mono">${esc(JSON.stringify(wf.input_schema,null,2))}</pre>
+      <div class="section-title">Process · ${wf.nodes.length} nodes</div>${nodesHTML}
+      <div class="section-title">${t('outputTab')}</div>
+      <pre class="mono">${esc(JSON.stringify(wf.output_schema,null,2))}</pre>
+      <details class="acc"><summary>Retry policy</summary><div class="acc-body"><pre class="mono">${esc(JSON.stringify(wf.retry_policy,null,2))}</pre></div></details>
+      <details class="acc"><summary>Routing policy</summary><div class="acc-body"><pre class="mono">${esc(JSON.stringify(wf.routing_policy,null,2))}</pre></div></details>
+      <details class="acc"><summary>Version history</summary><div class="acc-body"><pre class="mono">${esc(JSON.stringify(wf.version_history,null,2))}</pre></div></details>
+      <button class="btn wide primary" id="btnRun" style="margin-top:16px">${t('runWorkflow')}</button>`;
+
+    this.openSheet('Workflow', wf.workflow_id+'@'+wf.version, body, (root)=>{
+      root.querySelector('#btnRun').addEventListener('click',()=>{
+        UI.closeSheet();
+        setTimeout(()=>UI.openRunDialog(wfId), 220);
+      });
+    });
+  },
+
+  openRunDialog(wfId){
+    const wf = Workflows.get(wfId);
+    if(!wf) return;
+    let inputJSON;
+    if(wf.workflow_id==='news_pipeline'){
+      inputJSON = JSON.stringify({ source:'hackernews_top', limit:3, language:'both' }, null, 2);
+    } else if(wf.workflow_id==='content_pipeline'){
+      inputJSON = JSON.stringify({ topic:'The future of AI in web design', tone:'editorial', max_words:200 }, null, 2);
+    } else {
+      inputJSON = JSON.stringify({ message:'hello' }, null, 2);
+    }
+
+    const aiProviders = ['groq','openrouter','gemini'];
+    const hasAnyKey = aiProviders.some(id=>Secrets.has(id));
+    const keyWarning = !hasAnyKey && (wfId==='news_pipeline'||wfId==='content_pipeline')
+      ? `<div class="card" style="border-color:var(--warn)">
+          <p style="color:var(--warn);font-size:12px">⚠ No AI API keys configured. The workflow will fall back to local extraction. Set keys in System → API Keys for real AI.</p>
+        </div>` : '';
+
+    const body = `
+      ${keyWarning}
+      <div class="card"><h3>${esc(wf.workflow_name)}</h3><p>Provide input validated against the schema.</p></div>
+      <div class="field"><label>${t('inputLabel')}</label>
+      <textarea class="textarea" id="runInput">${esc(inputJSON)}</textarea></div>
+      <button class="btn wide primary" id="runGo">${t('startExecution')}</button>
+      <button class="btn wide" id="runCancel" style="margin-top:8px">${t('cancel')}</button>`;
+
+    this.openSheet(t('runWorkflow'), wf.workflow_id+'@'+wf.version, body, (root)=>{
+      root.querySelector('#runCancel').addEventListener('click',()=>UI.closeSheet());
+      root.querySelector('#runGo').addEventListener('click',()=>{
+        let input;
+        try{ input = JSON.parse(root.querySelector('#runInput').value); }
+        catch(e){ toast('Invalid JSON: '+e.message); return; }
+
+        const v = validateInput(wf.input_schema, input);
+        if(!v.ok){ toast('Input invalid: '+v.errors.join(', ')); return; }
+
+        UI.closeSheet();
+        const ex = Engine.start(wf.workflow_id, input);
+        setTimeout(()=>{ UI.go('runs'); UI.openInspector(ex.execution_id); }, 120);
+      });
+    });
+  },
+
+  openApprovalSheet(approvalId){
+    const a = Approvals.get(approvalId);
+    if(!a) return;
+    const ex = Executions.get(a.execution_id);
+    const body = `
+      <div class="card">
+        <span class="chip s-waiting"><span class="dot"></span>PENDING</span>
+        <h3 style="margin-top:10px">${esc(a.node_id)}</h3>
+        <p style="font-family:ui-monospace,Menlo,monospace;font-size:11px;margin-top:4px">${esc(a.approval_id)}</p>
+      </div>
+      <div class="section-title">${t('payloadPreview')}</div>
+      <pre class="mono">${esc(a.payload_preview||'—')}</pre>
+      <div class="section-title">Execution</div>
+      <div class="card tap" id="aprOpenEx">
+        <div class="row"><div class="grow"><h3>${esc(ex?(Workflows.get(ex.workflow_id)?.workflow_name||ex.workflow_id):'—')}</h3>
+        <p style="margin-top:3px;font-family:ui-monospace,Menlo,monospace">${esc(a.execution_id)}</p></div>
+        <span class="chip s-${ex?String(ex.status).toLowerCase().replace(/_/g,'-'):'queued'}">${esc(ex?ex.status:'—')}</span></div>
+      </div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn primary" style="flex:1" id="aprApprove">${t('approve')}</button>
+        <button class="btn danger" style="flex:1" id="aprReject">${t('reject')}</button>
+      </div>
+      <button class="btn wide" style="margin-top:8px" id="aprCancel">${t('cancelExecution')}</button>`;
+
+    this.openSheet('Approval', a.approval_id, body, (root)=>{
+      root.querySelector('#aprApprove').addEventListener('click',()=>{
+        UI.closeSheet();
+        try{ Engine.resume(a.execution_id,'approve','admin'); toast('Approved'); setTimeout(()=>UI.go('runs'),150); }
+        catch(e){ toast('Failed: '+e.message); }
+      });
+      root.querySelector('#aprReject').addEventListener('click',()=>{
+        const reason = prompt('Rejection reason:','Rejected by operator');
+        if(reason===null) return;
+        UI.closeSheet();
+        Engine.resume(a.execution_id,'reject','admin');
+        toast('Rejected'); setTimeout(()=>UI.go('runs'),150);
+      });
+      root.querySelector('#aprCancel').addEventListener('click',()=>{
+        UI.closeSheet(); Engine.cancel(a.execution_id); toast('Cancelled');
+      });
+      root.querySelector('#aprOpenEx').addEventListener('click',()=>{
+        UI.closeSheet(); setTimeout(()=>UI.openInspector(a.execution_id),220);
+      });
+    });
+  },
+
+  openInspector(executionId){
+    const ex = Executions.get(executionId);
+    if(!ex) return;
+    this._inspectorExec = executionId;
+    this._inspectorTab = 'timeline';
+    $('#inspector').classList.add('on');
+    this.renderInspector(executionId);
+  },
+
+  closeInspector(){ $('#inspector').classList.remove('on'); this._inspectorExec = null; },
+
+  renderInspector(executionId){
+    const ex = Executions.get(executionId);
+    if(!ex) return;
+    const wf = Workflows.get(ex.workflow_id);
+    $('#inspTitle').textContent = wf?wf.workflow_name:ex.workflow_id;
+    $('#inspSub').textContent = ex.execution_id+' · v'+ex.workflow_version;
+    $('#inspStatus').innerHTML = `<span class="chip s-${String(ex.status).toLowerCase().replace(/_/g,'-')}"><span class="dot"></span>${esc(ex.status)}</span>`;
+
+    const tabs = ['timeline','input','process','events','output','errors','artifacts'];
+    const active = this._inspectorTab;
+    const tabsHTML = `<div class="tabs">${tabs.map(tb=>`<button data-tab="${tb}" class="${tb===active?'active':''}">${t(tb+'Tab')||tb}</button>`).join('')}</div>`;
+
+    let content = '';
+    if(active==='timeline') content = this.renderTimeline(ex);
+    else if(active==='input') content = `<pre class="mono">${esc(JSON.stringify(ex.input,null,2))}</pre>`;
+    else if(active==='process') content = this.renderWaterfall(ex);
+    else if(active==='events') content = this.renderEvents(ex);
+    else if(active==='output') content = `<pre class="mono">${esc(JSON.stringify(ex.output,null,2).slice(0,8000))}</pre>`;
+    else if(active==='errors') content = ex.error_summary?`<pre class="mono">${esc(JSON.stringify(ex.error_summary,null,2))}</pre>`:'<div class="empty">'+t('noErrors')+'</div>';
+    else if(active==='artifacts'){
+      const arts = Artifacts.forExecution(ex.execution_id);
+      content = arts.length ? arts.map(a=>`
+        <div class="card tap" data-art="${esc(a.artifact_id)}">
+          <div class="row"><div class="grow"><h3>${esc(a.name)}</h3>
+          <p style="margin-top:3px"><code class="k">${esc(a.type)}</code> · ${a.size} bytes</p></div></div>
+        </div>`).join('') : '<div class="empty">'+t('noArtifacts')+'</div>';
+    }
+
+    const header = `
+      <div class="card">
+        <div class="row">
+          <span class="chip s-${String(ex.status).toLowerCase().replace(/_/g,'-')}"><span class="dot"></span>${esc(ex.status)}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--dim);font-family:ui-monospace,Menlo,monospace">${ex.duration_ms!=null?fmtMs(ex.duration_ms):'—'}</span>
+        </div>
+        <dl class="kv" style="margin-top:10px">
+          <dt>${t('traceId')}</dt><dd>${esc(ex.trace_id)}</dd>
+          <dt>${t('started')}</dt><dd>${esc(ex.started_at)}</dd>
+          <dt>${t('inputHash')}</dt><dd>${esc(ex.input_hash)}</dd>
+          <dt>${t('outputHash')}</dt><dd>${esc(ex.output_hash||'—')}</dd>
+          <dt>${t('nodesOkFail')}</dt><dd>${ex.metrics?.nodes_ok||0} / ${ex.metrics?.nodes_failed||0}</dd>
+          <dt>${t('retryCount')}</dt><dd>${ex.metrics?.retries||0}</dd>
+          <dt>${t('tokensUsed')}</dt><dd>${ex.metrics?.total_tokens||0}</dd>
+        </dl>
+        ${[States.RUNNING,States.RETRYING,States.WAITING_FOR_APPROVAL].includes(ex.status)
+          ? `<button class="btn danger wide sm" style="margin-top:12px" id="inspCancel">${t('cancelExecution')}</button>`:''}
+        ${ex.status===States.WAITING_FOR_APPROVAL&&ex.approval_id
+          ? `<button class="btn primary wide sm" style="margin-top:8px" id="inspApprove">${t('approve')}</button>`:''}
+      </div>`;
+
+    $('#inspBody').innerHTML = header + tabsHTML + content;
+
+    $$('#inspBody .tabs button').forEach(b=>{
+      b.addEventListener('click',()=>{ this._inspectorTab = b.dataset.tab; this.renderInspector(executionId); });
+    });
+    const cancelBtn = $('#inspCancel');
+    if(cancelBtn) cancelBtn.addEventListener('click',()=>{ Engine.cancel(executionId); toast('Cancel requested'); });
+    const apBtn = $('#inspApprove');
+    if(apBtn) apBtn.addEventListener('click',()=>{ this.closeInspector(); setTimeout(()=>this.openApprovalSheet(ex.approval_id),220); });
+    $$('#inspBody [data-art]').forEach(el=>{
+      el.addEventListener('click',()=>this.openArtifactSheet(el.dataset.art));
+    });
+  },
+
+  renderTimeline(ex){
+    const wf = Workflows.get(ex.workflow_id);
+    if(!wf) return '<div class="empty">Workflow definition missing.</div>';
+    return `<div class="timeline">${wf.nodes.map(node=>{
+      const r = ex.node_results[node.id];
+      let cls='', meta='pending';
+      if(r){
+        if(r.status==='SUCCEEDED'){ cls='ok'; meta=fmtMs(r.duration_ms)+' · '+(r.provider||'—'); }
+        else if(r.status==='FAILED'){ cls='fail'; meta='FAILED · '+(r.error&&r.error.code||'—'); }
+        else if(r.status==='WAITING_FOR_APPROVAL'){ cls='wait'; meta='waiting approval'; }
+      }
+      return `<div class="tnode ${cls}">
+        <div class="lbl"><b>${esc(node.name)}</b>
+        <span style="font-size:9px;padding:2px 6px;border-radius:99px;background:var(--surface-2);color:var(--dim)">${esc(node.type)}</span></div>
+        <div class="meta">${esc(meta)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  },
+
+  renderWaterfall(ex){
+    const wf = Workflows.get(ex.workflow_id);
+    if(!wf) return '';
+    const total = ex.duration_ms||1;
+    return `<div class="wf">${wf.nodes.map(node=>{
+      const r = ex.node_results[node.id];
+      if(!r) return `<div class="wf-row"><div class="name">${esc(node.name)}</div><div class="wf-bar-wrap"></div><div class="ms">—</div></div>`;
+      const start = r.started_at?(new Date(r.started_at).getTime()-new Date(ex.started_at).getTime()):0;
+      const dur = r.duration_ms||0;
+      const leftPct = clamp((start/total)*100,0,100);
+      const widthPct = clamp((dur/total)*100,0.6,100);
+      const cls = r.status==='FAILED'?'err':(r.status==='WAITING_FOR_APPROVAL'?'wait':'');
+      return `<div class="wf-row"><div class="name">${esc(node.name)}</div>
+        <div class="wf-bar-wrap"><div class="wf-bar ${cls}" style="left:${leftPct}%;width:${widthPct}%"></div></div>
+        <div class="ms">${r.duration_ms!=null?fmtMs(r.duration_ms):'—'}</div></div>`;
+    }).join('')}
+    <div style="margin-top:8px;font-size:10px;color:var(--mute);text-align:right">total ${ex.duration_ms!=null?fmtMs(ex.duration_ms):'—'}</div></div>`;
+  },
+
+  renderEvents(ex){
+    const evs = ex.events||[];
+    if(!evs.length) return '<div class="empty">'+t('noEvents')+'</div>';
+    return evs.slice().reverse().map(e=>`
+      <div class="card">
+        <b style="font-size:12px">${esc(e.type)}</b>
+        <p style="font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,monospace;margin-top:2px">${esc(e.time)}</p>
+        ${e.data&&Object.keys(e.data).length?`<pre class="mono" style="margin-top:8px;max-height:140px">${esc(JSON.stringify(e.data,null,2))}</pre>`:''}
+      </div>`).join('');
+  },
+
+  openArtifactSheet(id){
+    const a = Artifacts.get(id);
+    if(!a) return;
+    const body = `
+      <div class="card"><h3>${esc(a.name)}</h3>
+      <dl class="kv" style="margin-top:8px">
+        <dt>type</dt><dd>${esc(a.type)}</dd>
+        <dt>size</dt><dd>${a.size} bytes</dd>
+        <dt>hash</dt><dd>${esc(a.content_hash)}</dd>
+        <dt>workflow</dt><dd>${esc(a.workflow_id)}</dd>
+        <dt>execution</dt><dd>${esc(a.execution_id)}</dd>
+      </dl></div>
+      <div class="section-title">Content</div>
+      <pre class="mono">${esc(a.content.length>6000?a.content.slice(0,6000)+'\n\n… (truncated)':a.content)}</pre>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn sm" id="artDownload">Download</button>
+        ${a.type==='text/html'?'<button class="btn sm" id="artOpen">Open in new tab</button>':''}
+      </div>`;
+    this.openSheet('Artifact', a.artifact_id, body, (root)=>{
+      root.querySelector('#artDownload').addEventListener('click',()=>downloadFile(a.name,a.content,a.type));
+      const openBtn = root.querySelector('#artOpen');
+      if(openBtn) openBtn.addEventListener('click',()=>{
+        const blob = new Blob([a.content],{type:'text/html'});
+        window.open(URL.createObjectURL(blob),'_blank');
+      });
+    });
+  }
+};
+
+/* ── input validation ────────────────────────────────────────────────── */
+function validateInput(schema, input){
+  const errors = [];
+  if(schema&&schema.required){
+    for(const k of schema.required){
+      if(input[k]===undefined||input[k]===null) errors.push(k+' is required');
+    }
+  }
+  if(schema&&schema.properties){
+    for(const [k,def] of Object.entries(schema.properties)){
+      const v = input[k];
+      if(v===undefined) continue;
+      if(def.type==='string'&&typeof v!=='string') errors.push(k+' must be string');
+      if(def.type==='integer'&&!Number.isInteger(v)) errors.push(k+' must be integer');
+      if(def.enum&&!def.enum.includes(v)) errors.push(k+' must be one of '+def.enum.join(', '));
+    }
+  }
+  return { ok:errors.length===0, errors };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   17. UI WIRING + BOOT
+   ═══════════════════════════════════════════════════════════════════════════ */
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('on'), 2200);
+}
+
+function downloadFile(name, content, mime){
+  const blob = new Blob([content],{type:mime||'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 400);
+}
+
+/* Language switching */
+function setLang(lang){
+  LANG = lang;
+  document.documentElement.setAttribute('data-lang', lang);
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', lang==='fa'?'rtl':'ltr');
+  $$('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if(I18N[lang][k]) el.textContent = I18N[lang][k];
+  });
+  UI.render();
+}
+
+/* Theme switching */
+function setTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', theme==='dark'?'#04060a':'#f5f7fc');
+}
+
+/* Nav */
+$('#nav').addEventListener('click', e=>{
+  const b = e.target.closest('button');
+  if(!b) return;
+  UI.go(b.dataset.go);
+});
+$('#sheetClose').addEventListener('click', ()=>UI.closeSheet());
+$('#sheetBack').addEventListener('click', ()=>UI.closeSheet());
+$('#inspBack').addEventListener('click', ()=>UI.closeInspector());
+
+/* Language toggle */
+$('#langToggle').addEventListener('click', e=>{
+  const b = e.target.closest('button');
+  if(!b) return;
+  $$('#langToggle button').forEach(x=>x.classList.toggle('active', x===b));
+  setLang(b.dataset.lang);
+});
+
+/* Theme toggle */
+$('#themeToggle').addEventListener('click', e=>{
+  const b = e.target.closest('button');
+  if(!b) return;
+  $$('#themeToggle button').forEach(x=>x.classList.toggle('active', x===b));
+  setTheme(b.dataset.theme);
+});
+
+/* System buttons */
+$('#btnExport').addEventListener('click', ()=>{
+  const dump = {
+    v:3, saved_at:nowISO(),
+    executions:Executions.list, approvals:Approvals.list,
+    artifacts:Artifacts.list, events:EventStore.events,
+    providers_state:Object.fromEntries(Providers.all().map(p=>[p.id,{
+      availability:p.availability, latency_history_ms:p.latency_history_ms,
+      error_rate:p.error_rate, quality_history:p.quality_history
+    }]))
+  };
+  downloadFile('nononick-os-state.json', JSON.stringify(dump,null,2), 'application/json');
+  toast('State exported');
+});
+
+$('#btnImport').addEventListener('click', ()=>{
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.addEventListener('change', ()=>{
+    const f = inp.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      try{
+        const d = JSON.parse(r.result);
+        if(!d||!Array.isArray(d.executions)) throw new Error('Invalid');
+        Executions.list = d.executions;
+        Approvals.list = d.approvals||[];
+        Artifacts.list = d.artifacts||[];
+        EventStore.events = d.events||[];
+        persist(); UI.render(); toast('State imported');
+      }catch(e){ toast('Import failed: '+e.message); }
+    };
+    r.readAsText(f);
+  });
+  inp.click();
+});
+
+$('#btnReset').addEventListener('click', ()=>{
+  if(!confirm('Reset? All local data will be erased.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  Executions.list=[]; Approvals.list=[]; Artifacts.list=[]; EventStore.events=[];
+  Secrets.clearAll();
+  UI.render(); toast('Reset complete');
+});
+
+/* Event-driven re-render */
+EventStore.subscribe(evt=>{
+  if(/^workflow\.(execution|node|approval)\./.test(evt.type)) UI.render();
+});
+window.addEventListener('online', ()=>UI.render());
+window.addEventListener('offline', ()=>UI.render());
+
+/* Boot */
+(function boot(){
+  rehydrate();
+  UI.go('home');
+  UI.render();
+  console.log(
+    '%cNONONICK WORKFLOW OS%c v3.0 — 3 real AI agents: Groq · OpenRouter · Gemini',
+    'background:linear-gradient(90deg,#22d3ee,#a855f7);color:#04121a;padding:2px 8px;border-radius:4px;font-weight:800',
+    'color:#22d3ee'
+  );
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   18. PUBLIC API
+   ═══════════════════════════════════════════════════════════════════════════ */
+window.NONONICK = {
+  version:'3.0.0',
+  engine:Engine, workflows:Workflows, executions:Executions,
+  approvals:Approvals, artifacts:Artifacts, events:EventStore,
+  providers:Providers, router:Router, metrics:Metrics,
+  learning:Learning, reports:Reports, secrets:Secrets,
+  adapters:AIAdapters,
+
+  /* Set an API key programmatically */
+  setKey(providerId, key){ Secrets.set(providerId, key); UI.render(); },
+
+  /* Run a workflow programmatically */
+  run(workflowId, input){ return Engine.start(workflowId, input); },
+
+  /* PHP/MySQL adapter stub */
+  api:{
+    enabled:false, baseUrl:null,
+    async saveExecution(execution){},
+    async fetchExecution(id){},
+    async requestApproval(approval){},
+    async decideApproval(id, decision, actor){},
+    async putArtifact(artifact){},
+    async fetchMetrics(){},
+    async routeProvider(task, requirements){}
+  }
+};
+
+})();
+</script>
+</body>
+</html>
